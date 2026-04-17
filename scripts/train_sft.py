@@ -38,10 +38,16 @@ def detect_gpu_memory_gb() -> float:
     return round(props.total_memory / (1024**3), 2)
 
 
+def is_bf16_available() -> bool:
+    return torch.cuda.is_available() and hasattr(torch.cuda, "is_bf16_supported") and torch.cuda.is_bf16_supported()
+
+
 def auto_adjust_config(config: dict) -> dict:
     effective = dict(config)
     gpu_memory_gb = detect_gpu_memory_gb()
     effective["detected_gpu_memory_gb"] = gpu_memory_gb
+    effective["use_bf16"] = bool(config.get("use_bf16", False) and is_bf16_available())
+    effective["use_fp16"] = bool(torch.cuda.is_available() and not effective["use_bf16"])
 
     if gpu_memory_gb and gpu_memory_gb <= 16:
         effective["max_seq_length"] = min(int(effective.get("max_seq_length", 2048)), 1024)
@@ -72,6 +78,8 @@ def print_effective_config(config: dict) -> None:
         "learning_rate": config["learning_rate"],
         "lora_r": config["lora_r"],
         "detected_gpu_memory_gb": config.get("detected_gpu_memory_gb", 0.0),
+        "use_fp16": config.get("use_fp16", False),
+        "use_bf16": config.get("use_bf16", False),
         "auto_adjust_reason": config.get("auto_adjust_reason", ""),
     }
     print(json.dumps(printable, indent=2))
@@ -131,17 +139,19 @@ def main() -> None:
     tokenizer.model_max_length = config["max_seq_length"]
 
     quantization_config = None
+    compute_dtype = torch.bfloat16 if config.get("use_bf16", False) else torch.float16
     if config.get("load_in_4bit", True):
         quantization_config = BitsAndBytesConfig(
             load_in_4bit=True,
             bnb_4bit_quant_type="nf4",
-            bnb_4bit_compute_dtype=torch.float16,
+            bnb_4bit_compute_dtype=compute_dtype,
             bnb_4bit_use_double_quant=True,
         )
 
     model = AutoModelForCausalLM.from_pretrained(
         model_name,
         quantization_config=quantization_config,
+        torch_dtype=compute_dtype if torch.cuda.is_available() else torch.float32,
         device_map="auto",
         trust_remote_code=True,
     )
@@ -168,11 +178,11 @@ def main() -> None:
         per_device_train_batch_size=config["per_device_train_batch_size"],
         gradient_accumulation_steps=config["gradient_accumulation_steps"],
         learning_rate=config["learning_rate"],
-        warmup_ratio=config["warmup_ratio"],
+        warmup_steps=max(1, int((len(dataset) / max(config["per_device_train_batch_size"], 1)) * config["num_train_epochs"] * 0.03)),
         logging_steps=config["logging_steps"],
         save_steps=config["save_steps"],
-        fp16=torch.cuda.is_available(),
-        bf16=False,
+        fp16=config.get("use_fp16", False),
+        bf16=config.get("use_bf16", False),
         report_to="none",
         optim="paged_adamw_8bit" if config.get("load_in_4bit", True) else "adamw_torch",
         lr_scheduler_type="cosine",
