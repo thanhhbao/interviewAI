@@ -1,17 +1,39 @@
-# InterviewAI Colab Training Skeleton
+# InterviewAI
 
-Bo skeleton nay tap trung vao 2 lop:
+InterviewAI is a multimodal interview-assistant skeleton for:
 
-1. Train pipeline tren Colab cho cac task LLM text.
-2. Runtime pipeline da modal gom:
-   - resume parsing
-   - question generation
-   - audio analysis voi Whisper
-   - vision analysis voi MediaPipe
-   - fusion scoring
-   - report JSON/PDF
+- resume parsing
+- job-description matching
+- interview question generation
+- speech analysis
+- vision-based behavior analysis
+- score fusion
+- report generation
 
-## Cau truc
+The repository is designed around two layers:
+
+1. A `training pipeline` for fine-tuning a text LLM on Colab.
+2. A `runtime multimodal pipeline` that combines LLM, Whisper, MediaPipe, fusion logic, and reporting.
+
+## What Is Already Implemented
+
+### Training
+
+- LoRA / QLoRA fine-tuning for one multitask LLM
+- dataset preparation from local samples
+- dataset preparation directly from the two Kaggle datasets you selected
+- offline data augmentation for resume extraction and question generation
+
+### Runtime
+
+- resume parsing and resume optimization
+- question generation
+- audio analysis with Whisper or transcript fallback
+- vision analysis with MediaPipe-ready hooks or precomputed frame metrics
+- score fusion
+- JSON and PDF report generation
+
+## Project Structure
 
 ```text
 .
@@ -20,13 +42,15 @@ Bo skeleton nay tap trung vao 2 lop:
 ├── data/
 │   └── sample/
 │       ├── answers/
+│       ├── audio/
 │       ├── jds/
-│       └── resumes/
+│       ├── resumes/
+│       └── vision/
 ├── scripts/
 │   ├── prepare_dataset.py
 │   ├── prepare_kaggle_multitask.py
-│   ├── run_multimodal_session.py
 │   ├── run_demo_pipeline.py
+│   ├── run_multimodal_session.py
 │   └── train_sft.py
 ├── src/
 │   └── interview_ai/
@@ -41,48 +65,128 @@ Bo skeleton nay tap trung vao 2 lop:
 │       ├── prompts.py
 │       ├── report.py
 │       ├── schemas.py
+│       ├── scoring.py
 │       ├── session.py
-│       └── scoring.py
 │       └── vision.py
 └── requirements-colab.txt
 ```
 
-## Luong train tren Colab
+## Pipeline Mapping
 
-### 1. Cai dependencies
+The codebase matches the original system design as follows:
+
+### 1. Resume Processing
+
+- `src/interview_ai/parsers.py`
+- `src/interview_ai/pipeline.py`
+- `scripts/prepare_dataset.py`
+- `scripts/prepare_kaggle_multitask.py`
+
+### 2. Interview Setup
+
+- `src/interview_ai/pipeline.py`
+- `src/interview_ai/session.py`
+
+### 3. Real-Time Analysis
+
+- `src/interview_ai/audio.py`
+- `src/interview_ai/vision.py`
+
+### 4. Evaluation and Feedback
+
+- `src/interview_ai/scoring.py`
+- `src/interview_ai/fusion.py`
+- `src/interview_ai/report.py`
+- `src/interview_ai/session.py`
+
+## Datasets
+
+This repository is currently set up to train one multitask text model from these two datasets:
+
+- Resume Entities for NER  
+  https://www.kaggle.com/datasets/dataturks/resume-entities-for-ner
+- Software Engineering Interview Questions Dataset  
+  https://www.kaggle.com/datasets/syedmharis/software-engineering-interview-questions-dataset
+
+### Verified Raw Dataset Schema
+
+The adapters were updated against the actual zip files:
+
+- `resume-entities dataset.zip`
+  - contains `Entity Recognition in Resumes.json`
+  - stored as `JSONL`
+  - fields include `content`, `annotation`, `extras`
+- `interview_questions dataset.zip`
+  - contains `Software Questions.csv`
+  - encoded as `cp1252`
+  - columns are:
+    - `Question Number`
+    - `Question`
+    - `Answer`
+    - `Category`
+    - `Difficulty`
+
+## Training Strategy
+
+This repository is set up for `one multitask text model`, not two separate models.
+
+The current multitask training targets:
+
+- `resume_extract`
+- `question_generation`
+
+Additional tasks such as `resume_optimize` and `answer_evaluation` are supported in the codebase, but they are not fully backed by the two Kaggle datasets alone. They will benefit from extra labeled data later.
+
+## Offline Data Augmentation
+
+`src/interview_ai/augmentation.py` adds offline augmentation before training.
+
+### Resume augmentation
+
+- section header variation
+- phone-number formatting variation
+- section/block reordering
+- spacing normalization
+
+The target JSON remains unchanged.
+
+### Question-generation augmentation
+
+- multiple prompt templates
+- multiple synthetic JD formulations
+- multiple instruction styles for the same target question
+
+## Colab Setup
+
+Install dependencies:
 
 ```bash
 pip install -r requirements-colab.txt
 ```
 
-### 2. Dua du lieu vao `data/`
+## Prepare Training Data from the Kaggle Zip Files
 
-- `data/sample/resumes/`: CV dang `.pdf`, `.docx`, `.txt`
-- `data/sample/jds/`: Job Description dang `.txt`, `.md`, `.json`
-- `data/sample/answers/`: file `.jsonl` chua transcript + rubric cho bai train danh gia cau tra loi
-
-### 3. Tao dataset instruction tuning
-
-```bash
-python scripts/prepare_dataset.py \
-  --resume-dir data/sample/resumes \
-  --jd-dir data/sample/jds \
-  --answer-file data/sample/answers/train_answers.jsonl \
-  --output-file output/train_sft.jsonl
-```
-
-Hoac neu ban da download 2 dataset Kaggle ve local/Drive:
+You can point the script directly to the zip files. Manual extraction is not required.
 
 ```bash
 python scripts/prepare_kaggle_multitask.py \
-  --resume-dataset-dir /content/datasets/resume-entities-for-ner \
-  --question-dataset-dir /content/datasets/software-engineering-interview-questions-dataset \
+  --resume-dataset-dir "/content/resume-entities dataset.zip" \
+  --question-dataset-dir "/content/interview_questions dataset.zip" \
   --augment \
   --num-augments 2 \
   --output-file output/train_sft.jsonl
 ```
 
-### 4. Train LoRA/QLoRA
+## Preview the Generated Training File
+
+Recommended before long training runs:
+
+```bash
+wc -l output/train_sft.jsonl
+head -n 3 output/train_sft.jsonl
+```
+
+## Train the Model
 
 ```bash
 python scripts/train_sft.py \
@@ -91,7 +195,7 @@ python scripts/train_sft.py \
   --output-dir output/qwen-resume-lora
 ```
 
-### 5. Chay demo inference
+## Run Text-Only Demo Inference
 
 ```bash
 python scripts/run_demo_pipeline.py \
@@ -101,7 +205,7 @@ python scripts/run_demo_pipeline.py \
   --jd-file data/sample/jds/sample_jd.txt
 ```
 
-### 6. Chay full multimodal session
+## Run Full Multimodal Session
 
 ```bash
 python scripts/run_multimodal_session.py \
@@ -113,59 +217,36 @@ python scripts/run_multimodal_session.py \
   --report-dir output/report
 ```
 
-## Dinh dang dataset train
+## Training Data Format
 
-Script `prepare_dataset.py` sinh ra JSONL theo format chat:
+All training data is converted to a chat-style JSONL format:
 
 ```json
 {
   "messages": [
-    {"role": "system", "content": "You are an interview AI assistant."},
-    {"role": "user", "content": "Extract the following resume into JSON..."},
-    {"role": "assistant", "content": "{\"candidate_profile\": ... }"}
+    { "role": "system", "content": "You are an interview AI assistant." },
+    { "role": "user", "content": "Extract the following resume into JSON..." },
+    { "role": "assistant", "content": "{\"candidate_profile\": ... }" }
   ],
-  "task": "resume_extract"
+  "task": "resume_extract",
+  "meta": {
+    "dataset": "resume_entities_for_ner"
+  }
 }
 ```
 
-## Ghi chu quan trong
+## Notes
 
-- Skeleton nay tao `weak labels` cho task parse CV, optimize CV, generate questions.
-- `prepare_kaggle_multitask.py` da noi truc tiep 2 dataset Kaggle vao train pipeline:
-  - `Resume Entities for NER` -> task `resume_extract`
-  - `Software Engineering Interview Questions Dataset` -> task `question_generation`
-- `augmentation.py` bo sung offline data augmentation:
-  - bien doi format CV nhung giu nguyen target JSON
-  - tao nhieu prompt/JD bien the cho task question generation
-- Task `answer_evaluation` se tot hon neu ban co du lieu gan nhan that.
-- Neu Colab dung GPU T4, nen giu model base nho (`1.5B` hoac `3B`) va train bang QLoRA.
-- `audio.py` ho tro 2 che do:
-  - co `whisper`: transcribe audio that
-  - khong co `whisper`: doc transcript tu file `.txt` de demo pipeline
-- `vision.py` ho tro 2 che do:
-  - co `mediapipe`: phan tich frame/image that
-  - khong co `mediapipe`: doc file JSON feature da trich san de demo
-- `session.py` la orchestration layer de ghep CV + LLM + audio + vision + fusion + report.
+- The LLM is the part that is fine-tuned.
+- Whisper, MediaPipe, and TTS-related components are intended to stay pretrained or rule-based for now.
+- The runtime multimodal pipeline is implemented as a skeleton suitable for research demos and further extension.
+- For Colab T4, a small base model such as `Qwen2.5-1.5B-Instruct` is the practical default.
 
-## Anh xa voi pipeline ban dau
+## Recommended Next Steps
 
-1. `Resume Processing`
-   - `parsers.py`
-   - `prepare_dataset.py`
-   - `pipeline.py`
-2. `Interview Setup`
-   - `pipeline.py`
-   - `session.py`
-3. `Real-time Analysis`
-   - `audio.py`
-   - `vision.py`
-4. `Evaluation & Feedback`
-   - `scoring.py`
-   - `fusion.py`
-   - `report.py`
-   - `session.py`
+If you want stronger model quality, the next additions should be:
 
-## Nguon dataset text
-
-- Resume Entities for NER: https://www.kaggle.com/datasets/dataturks/resume-entities-for-ner
-- Software Engineering Interview Questions Dataset: https://www.kaggle.com/datasets/syedmharis/software-engineering-interview-questions-dataset
+1. train/validation split and dataset deduplication
+2. synthetic or manually labeled `answer_evaluation` data
+3. real MediaPipe landmark extraction instead of placeholder image-level hooks
+4. a Colab notebook for end-to-end execution

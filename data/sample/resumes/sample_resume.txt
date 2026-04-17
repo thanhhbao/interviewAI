@@ -1,0 +1,7 @@
+Nguyen Van A
+Email: nguyenvana@example.com
+Phone: +84 912 345 678
+
+Software Engineer with 2 years of experience building backend APIs using Python, FastAPI, PostgreSQL, and Docker.
+Worked on an e-commerce analytics project and a recommendation system prototype.
+Skills: Python, FastAPI, PostgreSQL, Docker, AWS, Machine Learning

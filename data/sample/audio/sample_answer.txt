@@ -1,0 +1,3 @@
+Hello, my name is Nguyen Van A. I have two years of backend experience with Python, FastAPI, PostgreSQL, and Docker.
+In my recent project, I designed async APIs for analytics workloads and improved report generation speed by 40 percent.
+I usually explain trade-offs between performance, maintainability, and delivery time when I work with product teams.

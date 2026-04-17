@@ -1,0 +1,8 @@
+We are hiring a Backend Python Engineer.
+
+Requirements:
+- Strong Python and FastAPI experience
+- Experience with PostgreSQL and Docker
+- Familiarity with AWS
+- Ability to communicate technical trade-offs clearly
+- Experience with machine learning is a plus
