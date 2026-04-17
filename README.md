@@ -49,6 +49,7 @@ The repository is designed around two layers:
 ├── scripts/
 │   ├── prepare_dataset.py
 │   ├── prepare_kaggle_multitask.py
+│   ├── prepare_round2_dataset.py
 │   ├── test_model.py
 │   ├── run_demo_pipeline.py
 │   ├── run_turn_based_session.py
@@ -131,6 +132,41 @@ The adapters were updated against the actual zip files:
     - `Answer`
     - `Category`
     - `Difficulty`
+
+## Round 2 Dataset Strategy
+
+For a more realistic Vietnamese interview flow, the repository now supports generating a synthetic Vietnamese behavior dataset on top of the original question dataset.
+
+This round-2 dataset includes:
+
+- `question_generation_vi`
+- `answer_evaluation_vi`
+- `follow_up_vi`
+- `next_action_policy_vi`
+- `resume_extract`
+- `question_generation`
+
+Prepare it with:
+
+```bash
+python scripts/prepare_round2_dataset.py \
+  --resume-dataset-dir "/content/resume-entities dataset.zip" \
+  --question-dataset-dir "/content/interview_questions dataset.zip" \
+  --augment \
+  --num-augments 2 \
+  --output-file output/train_round2.jsonl
+```
+
+Then continue training from the round-1 adapter:
+
+```bash
+python scripts/train_sft.py \
+  --config configs/sft_config.json \
+  --dataset-file output/train_round2.jsonl \
+  --resume-adapter-dir output/qwen-resume-lora \
+  --output-dir output/qwen-resume-lora-round2 \
+  --num-train-epochs 1
+```
 
 ## Training Strategy
 

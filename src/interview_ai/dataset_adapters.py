@@ -8,7 +8,13 @@ from pathlib import Path
 from typing import Any
 
 from interview_ai.augmentation import augment_resume_text, build_question_prompt_variants
-from interview_ai.prompts import SYSTEM_PROMPT, build_resume_extract_prompt
+from interview_ai.prompts import (
+    SYSTEM_PROMPT,
+    build_answer_evaluation_prompt,
+    build_follow_up_prompt,
+    build_question_generation_prompt,
+    build_resume_extract_prompt,
+)
 from interview_ai.schemas import (
     CandidateProfile,
     ChatMessage,
@@ -416,4 +422,251 @@ def load_interview_question_records(
                         },
                     )
                 )
+    return records
+
+
+def _vn_category_to_resume(category: str, brief_answer: str) -> dict[str, Any]:
+    return {
+        "candidate_profile": {
+            "name": "Ung vien mau",
+            "summary": f"Ung vien co kinh nghiem lien quan den {category}.",
+            "skills": [category, "giai quyet van de", "giao tiep"],
+            "experience": [
+                {
+                    "role": "Software Engineer",
+                    "highlights": [
+                        f"Da thuc hien cac bai toan lien quan den {category}.",
+                        brief_answer[:180] or f"Kinh nghiem thuc te voi {category}.",
+                    ],
+                }
+            ],
+        }
+    }
+
+
+def _vn_job_description(category: str, difficulty: str) -> str:
+    return (
+        "Vi tri: Software Engineer\n"
+        f"Chu de trong tam: {category}\n"
+        f"Muc do mong doi: {difficulty}\n"
+        "Nguoi phong van can dat cau hoi ky thuat bang tieng Viet, uu tien tinh thuc te va kha nang giai thich trade-off."
+    )
+
+
+def _strong_answer_vi(category: str, reference_answer: str) -> str:
+    return (
+        f"Em se tra loi cau hoi nay theo huong thuc te voi chu de {category}. "
+        f"Ve co ban, {reference_answer.strip()} "
+        "Trong du an gan day, em da ap dung kien thuc nay de cai thien hieu nang va giam loi trong he thong. "
+        "Em cung co the noi ro trade-off giua kha nang mo rong, do phuc tap van hanh va toc do phat trien."
+    )
+
+
+def _weak_answer_vi(category: str) -> str:
+    return (
+        f"Em co nghe qua ve {category} nhung em chua lam sau. "
+        "Theo em thi no la mot ky thuat hoac khai niem de he thong chay tot hon. "
+        "Em chua co vi du thuc te ro rang va em cung chua danh gia duoc trade-off."
+    )
+
+
+def _incorrect_answer_vi(category: str) -> str:
+    return (
+        f"Theo em, {category} chu yeu chi la cach dat ten bien va sap xep code. "
+        "No khong lien quan nhieu den kien truc hay hieu nang he thong. "
+        "Thong thuong cu viet code chay duoc la du."
+    )
+
+
+def _review_json_vi(answer_quality: str, category: str) -> dict[str, Any]:
+    presets = {
+        "strong": {
+            "relevance_score": 0.9,
+            "communication_score": 0.84,
+            "confidence_score": 0.82,
+            "overall_score": 0.86,
+            "strengths": [
+                "Cau tra loi bam sat trong tam cau hoi.",
+                f"The hien hieu biet thuc te ve {category}.",
+                "Co de cap den trade-off va boi canh ap dung.",
+            ],
+            "improvements": [
+                "Co the bo sung them chi so dinh luong neu co.",
+            ],
+        },
+        "weak": {
+            "relevance_score": 0.48,
+            "communication_score": 0.58,
+            "confidence_score": 0.45,
+            "overall_score": 0.5,
+            "strengths": [
+                "Co co gang tra loi theo huong tong quan.",
+            ],
+            "improvements": [
+                f"Can dua ra vi du thuc te lien quan den {category}.",
+                "Can giai thich ro hon trade-off va cach ap dung.",
+            ],
+        },
+        "incorrect": {
+            "relevance_score": 0.2,
+            "communication_score": 0.42,
+            "confidence_score": 0.33,
+            "overall_score": 0.28,
+            "strengths": [
+                "Da tra loi truc tiep, khong tranh ne cau hoi.",
+            ],
+            "improvements": [
+                f"Noi dung chua dung ban chat cua chu de {category}.",
+                "Can quay lai khai niem cot loi va dua ra vi du chinh xac hon.",
+            ],
+        },
+    }
+    return presets[answer_quality]
+
+
+def _follow_up_payload_vi(answer_quality: str, question: str, category: str) -> dict[str, Any]:
+    if answer_quality == "strong":
+        return {
+            "next_action": "follow_up",
+            "follow_up_question": f"Ban co the chia se mot tinh huong thuc te ma ban phai can bang trade-off trong bai toan {category} khong?",
+            "rationale": "Ung vien tra loi kha tot, nen can dao sau de xac minh kinh nghiem thuc te.",
+        }
+    if answer_quality == "weak":
+        return {
+            "next_action": "follow_up",
+            "follow_up_question": f"Ban hay giai thich lai khai niem chinh cua cau hoi nay va dua mot vi du don gian lien quan den {category}.",
+            "rationale": "Cau tra loi con mo ho, can hoi lai de lam ro muc do hieu bai.",
+        }
+    return {
+        "next_action": "follow_up",
+        "follow_up_question": f"Cau tra loi vua roi chua chinh xac. Ban co the dinh nghia lai ro rang hon ve {category} va neu mot truong hop ap dung cu the khong?",
+        "rationale": "Ung vien tra loi sai, can mot cau hoi sua huong de kiem tra kien thuc nen tang.",
+    }
+
+
+def _policy_payload_vi(answer_quality: str) -> dict[str, Any]:
+    if answer_quality == "strong":
+        return {
+            "next_action": "follow_up",
+            "reason": "Ung vien tra loi tot, nen dao sau hon.",
+        }
+    if answer_quality == "weak":
+        return {
+            "next_action": "follow_up",
+            "reason": "Ung vien tra loi chua ro, can hoi lai mot cau de lam ro.",
+        }
+    return {
+        "next_action": "follow_up",
+        "reason": "Ung vien tra loi sai, can hoi cau sua huong truoc khi chuyen chu de.",
+    }
+
+
+def load_interview_behavior_vi_records(
+    dataset_file: str | Path,
+    limit: int | None = None,
+) -> list[dict]:
+    rows = _read_table_rows(dataset_file)
+    if limit is not None:
+        rows = rows[:limit]
+
+    records: list[dict] = []
+    for index, row in enumerate(rows):
+        question = _pick_value(row, QUESTION_COLUMN_CANDIDATES["question"])
+        reference_answer = _pick_value(row, QUESTION_COLUMN_CANDIDATES["brief_answer"])
+        category = _pick_value(row, QUESTION_COLUMN_CANDIDATES["category"]) or "lap trinh phan mem"
+        difficulty = (_pick_value(row, QUESTION_COLUMN_CANDIDATES["difficulty"]) or "medium").lower()
+        difficulty = difficulty if difficulty in {"easy", "medium", "hard"} else "medium"
+        if not question:
+            continue
+
+        synthetic_resume = _vn_category_to_resume(category, reference_answer)
+        synthetic_jd = _vn_job_description(category, difficulty)
+        question_payload = [
+            InterviewQuestion(
+                question_id=f"q{index + 1}",
+                type="technical",
+                skill_target=category,
+                difficulty=difficulty,
+                question=question,
+                expected_keywords=_keywords_from_answer(reference_answer or category),
+            ).model_dump()
+        ]
+        records.append(
+            build_chat_record(
+                task="question_generation_vi",
+                user_prompt=build_question_generation_prompt(
+                    json.dumps(synthetic_resume, ensure_ascii=False, indent=2),
+                    synthetic_jd,
+                ),
+                assistant_content=json.dumps(question_payload, ensure_ascii=False, indent=2),
+                meta={"dataset": "synthetic_vi_behavior", "category": category, "source_row": index},
+            )
+        )
+
+        answer_variants = {
+            "strong": _strong_answer_vi(category, reference_answer or question),
+            "weak": _weak_answer_vi(category),
+            "incorrect": _incorrect_answer_vi(category),
+        }
+
+        for answer_quality, answer_text in answer_variants.items():
+            review_payload = _review_json_vi(answer_quality, category)
+            records.append(
+                build_chat_record(
+                    task="answer_evaluation_vi",
+                    user_prompt=build_answer_evaluation_prompt(
+                        question=question,
+                        answer=answer_text,
+                        rubric="Danh gia bang tieng Viet dua tren do lien quan, giao tiep, su tu tin, va chieu sau kien thuc.",
+                    ),
+                    assistant_content=json.dumps(review_payload, ensure_ascii=False, indent=2),
+                    meta={
+                        "dataset": "synthetic_vi_behavior",
+                        "category": category,
+                        "answer_quality": answer_quality,
+                        "source_row": index,
+                    },
+                )
+            )
+
+            records.append(
+                build_chat_record(
+                    task="follow_up_vi",
+                    user_prompt=build_follow_up_prompt(
+                        question=question,
+                        answer=answer_text,
+                        transcript_history=f"Q: {question}\nA: {answer_text}",
+                    ),
+                    assistant_content=json.dumps(_follow_up_payload_vi(answer_quality, question, category), ensure_ascii=False, indent=2),
+                    meta={
+                        "dataset": "synthetic_vi_behavior",
+                        "category": category,
+                        "answer_quality": answer_quality,
+                        "source_row": index,
+                    },
+                )
+            )
+
+            policy_prompt = (
+                "Duoi vao cau hoi, cau tra loi cua ung vien, va muc do chat luong cau tra loi, "
+                "hay tra ve JSON voi cac khoa: next_action, reason. "
+                "Gia tri cua next_action chi duoc la follow_up, next_question, hoac end_interview. "
+                "Noi dung reason phai viet bang tieng Viet. Chi tra ve JSON.\n\n"
+                f"Question:\n{question}\n\n"
+                f"Candidate Answer:\n{answer_text}\n\n"
+                f"Answer Quality:\n{answer_quality}"
+            )
+            records.append(
+                build_chat_record(
+                    task="next_action_policy_vi",
+                    user_prompt=policy_prompt,
+                    assistant_content=json.dumps(_policy_payload_vi(answer_quality), ensure_ascii=False, indent=2),
+                    meta={
+                        "dataset": "synthetic_vi_behavior",
+                        "category": category,
+                        "answer_quality": answer_quality,
+                        "source_row": index,
+                    },
+                )
+            )
     return records
