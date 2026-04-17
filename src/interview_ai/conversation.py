@@ -63,7 +63,7 @@ class TurnBasedConversationManager:
         llm_eval = self.llm_pipeline.evaluate_answer(
             question=state.current_question,
             answer=audio.transcript,
-            rubric=rubric or "Score based on relevance, communication, confidence, and technical clarity.",
+            rubric=rubric or "Danh gia dua tren muc do lien quan, ky nang giao tiep, su tu tin, va do ro rang ve chuyen mon.",
             duration_seconds=audio.duration_seconds,
         )
         llm_scores = _safe_json_loads(llm_eval["model_output"])

@@ -40,21 +40,24 @@ class InterviewPipeline:
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": user_prompt},
         ]
-        input_ids = self.tokenizer.apply_chat_template(
+        model_inputs = self.tokenizer.apply_chat_template(
             messages,
             tokenize=True,
             add_generation_prompt=True,
             return_tensors="pt",
-        ).to(self.model.device)
+            return_dict=True,
+        )
+        model_inputs = {k: v.to(self.model.device) for k, v in model_inputs.items()}
         with torch.no_grad():
             output_ids = self.model.generate(
-                input_ids,
+                **model_inputs,
                 max_new_tokens=max_new_tokens,
                 do_sample=True,
                 temperature=0.7,
                 top_p=0.9,
             )
-        generated = output_ids[0][input_ids.shape[-1] :]
+        prompt_length = model_inputs["input_ids"].shape[-1]
+        generated = output_ids[0][prompt_length:]
         return self.tokenizer.decode(generated, skip_special_tokens=True).strip()
 
     def extract_resume(self, resume_file: str) -> dict[str, Any]:
