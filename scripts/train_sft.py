@@ -13,7 +13,7 @@ if str(SRC_DIR) not in sys.path:
 
 import torch
 from datasets import load_dataset
-from peft import LoraConfig
+from peft import LoraConfig, PeftModel
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, TrainingArguments
 from trl import SFTTrainer
 
@@ -134,11 +134,15 @@ def main() -> None:
     parser.add_argument("--dataset-file", required=True)
     parser.add_argument("--output-dir", required=True)
     parser.add_argument("--model-name")
+    parser.add_argument("--resume-adapter-dir")
+    parser.add_argument("--num-train-epochs", type=float)
     args = parser.parse_args()
 
     config = load_config(args.config)
     if args.model_name:
         config["model_name"] = args.model_name
+    if args.num_train_epochs is not None:
+        config["num_train_epochs"] = args.num_train_epochs
     config = auto_adjust_config(config)
     model_name = config["model_name"]
     Path(args.output_dir).mkdir(parents=True, exist_ok=True)
@@ -166,12 +170,15 @@ def main() -> None:
         device_map="auto",
         trust_remote_code=True,
     )
+    if args.resume_adapter_dir and Path(args.resume_adapter_dir).exists():
+        print(f"Resuming from adapter: {args.resume_adapter_dir}")
+        model = PeftModel.from_pretrained(model, args.resume_adapter_dir, is_trainable=True)
     model.config.use_cache = False
     if config.get("gradient_checkpointing", True):
         model.gradient_checkpointing_enable()
         model.enable_input_require_grads()
 
-    peft_config = LoraConfig(
+    peft_config = None if args.resume_adapter_dir and Path(args.resume_adapter_dir).exists() else LoraConfig(
         r=config["lora_r"],
         lora_alpha=config["lora_alpha"],
         lora_dropout=config["lora_dropout"],

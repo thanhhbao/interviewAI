@@ -49,6 +49,7 @@ The repository is designed around two layers:
 ├── scripts/
 │   ├── prepare_dataset.py
 │   ├── prepare_kaggle_multitask.py
+│   ├── test_model.py
 │   ├── run_demo_pipeline.py
 │   ├── run_multimodal_session.py
 │   └── train_sft.py
@@ -195,6 +196,17 @@ python scripts/train_sft.py \
   --output-dir output/qwen-resume-lora
 ```
 
+To continue training from an existing LoRA adapter:
+
+```bash
+python scripts/train_sft.py \
+  --config configs/sft_config.json \
+  --dataset-file output/train_sft.jsonl \
+  --resume-adapter-dir output/qwen-resume-lora \
+  --output-dir output/qwen-resume-lora-round2 \
+  --num-train-epochs 1
+```
+
 ## Run Text-Only Demo Inference
 
 ```bash
@@ -204,6 +216,23 @@ python scripts/run_demo_pipeline.py \
   --resume-file data/sample/resumes/sample_resume.txt \
   --jd-file data/sample/jds/sample_jd.txt
 ```
+
+## Quick Model Test After Each Round
+
+```bash
+python scripts/test_model.py \
+  --model-name Qwen/Qwen2.5-1.5B-Instruct \
+  --adapter-dir output/qwen-resume-lora \
+  --resume-file data/sample/resumes/sample_resume.txt \
+  --jd-file data/sample/jds/sample_jd.txt \
+  --output-file output/test_round1.json
+```
+
+This script checks:
+
+- whether `resume_extract` returns valid JSON
+- whether `question_generation` returns valid JSON
+- whether question generation returns a non-empty list
 
 ## Run Full Multimodal Session
 
