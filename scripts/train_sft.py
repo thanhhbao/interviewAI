@@ -31,6 +31,11 @@ def format_chat_example(example: dict, tokenizer) -> dict:
     return {"text": text}
 
 
+def truncate_text_to_context(text: str, tokenizer, max_seq_length: int) -> str:
+    token_ids = tokenizer(text, add_special_tokens=False, truncation=True, max_length=max_seq_length)["input_ids"]
+    return tokenizer.decode(token_ids, skip_special_tokens=False)
+
+
 def detect_gpu_memory_gb() -> float:
     if not torch.cuda.is_available():
         return 0.0
@@ -56,15 +61,21 @@ def auto_adjust_config(config: dict) -> dict:
         effective["lora_r"] = min(int(effective.get("lora_r", 16)), 8)
         effective["logging_steps"] = min(int(effective.get("logging_steps", 10)), 5)
         effective["auto_adjust_reason"] = "Applied low-VRAM profile (<=16GB GPU)."
+        effective["force_disable_mixed_precision"] = True
     elif gpu_memory_gb and gpu_memory_gb <= 24:
         effective["max_seq_length"] = min(int(effective.get("max_seq_length", 2048)), 1536)
         effective["per_device_train_batch_size"] = min(int(effective.get("per_device_train_batch_size", 2)), 1)
         effective["gradient_accumulation_steps"] = max(int(effective.get("gradient_accumulation_steps", 4)), 6)
         effective["auto_adjust_reason"] = "Applied medium-VRAM profile (<=24GB GPU)."
+        effective["force_disable_mixed_precision"] = True
     else:
         effective["auto_adjust_reason"] = "No VRAM downscaling applied."
+        effective["force_disable_mixed_precision"] = False
 
     effective["gradient_checkpointing"] = True
+    if effective.get("force_disable_mixed_precision", False):
+        effective["use_fp16"] = False
+        effective["use_bf16"] = False
     return effective
 
 
@@ -171,6 +182,10 @@ def main() -> None:
 
     dataset = load_dataset("json", data_files=args.dataset_file, split="train")
     dataset = dataset.map(lambda row: format_chat_example(row, tokenizer), remove_columns=dataset.column_names)
+    dataset = dataset.map(
+        lambda row: {"text": truncate_text_to_context(row["text"], tokenizer, config["max_seq_length"])},
+        desc="Truncating train dataset to max context",
+    )
 
     training_args = TrainingArguments(
         output_dir=args.output_dir,
@@ -181,12 +196,13 @@ def main() -> None:
         warmup_steps=max(1, int((len(dataset) / max(config["per_device_train_batch_size"], 1)) * config["num_train_epochs"] * 0.03)),
         logging_steps=config["logging_steps"],
         save_steps=config["save_steps"],
-        fp16=config.get("use_fp16", False),
-        bf16=config.get("use_bf16", False),
+        fp16=False if config.get("force_disable_mixed_precision", False) else config.get("use_fp16", False),
+        bf16=False if config.get("force_disable_mixed_precision", False) else config.get("use_bf16", False),
         report_to="none",
-        optim="paged_adamw_8bit" if config.get("load_in_4bit", True) else "adamw_torch",
+        optim="paged_adamw_32bit" if config.get("load_in_4bit", True) else "adamw_torch",
         lr_scheduler_type="cosine",
         gradient_checkpointing=config.get("gradient_checkpointing", True),
+        max_grad_norm=0.0,
     )
 
     trainer = build_sft_trainer(
