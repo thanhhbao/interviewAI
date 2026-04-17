@@ -77,7 +77,7 @@ class InterviewPipeline:
         jd_text = read_any_text(jd_file)
         weak_json = [item.model_dump() for item in generate_questions_weak(resume, jd_text)]
         prompt = build_question_generation_prompt(json.dumps(resume.model_dump(), ensure_ascii=False), jd_text)
-        return {"weak_label": weak_json, "model_output": self._generate(prompt)}
+        return {"weak_label": weak_json, "model_output": self._generate(prompt, max_new_tokens=1024)}
 
     def evaluate_answer(
         self,
@@ -111,4 +111,4 @@ class InterviewPipeline:
         transcript_history: str,
     ) -> dict[str, Any]:
         prompt = build_follow_up_prompt(current_question, answer, transcript_history)
-        return {"model_output": self._generate(prompt, max_new_tokens=256)}
+        return {"model_output": self._generate(prompt, max_new_tokens=512)}

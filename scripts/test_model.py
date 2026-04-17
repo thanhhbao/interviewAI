@@ -41,6 +41,13 @@ def question_summary(payload):
             "question_items_valid": sum(1 for item in payload if isinstance(item, dict) and "question" in item),
         }
     if isinstance(payload, dict):
+        if isinstance(payload.get("questions"), list):
+            questions = payload["questions"]
+            return {
+                "question_output_type": "dict.questions_list",
+                "question_count": len(questions),
+                "question_items_valid": sum(1 for item in questions if isinstance(item, dict) and "question" in item),
+            }
         return {
             "question_output_type": "dict",
             "question_count": 1 if "question" in payload else 0,

@@ -25,19 +25,23 @@ def build_resume_optimize_prompt(resume_json: str, jd_text: str) -> str:
 
 def build_question_generation_prompt(resume_json: str, jd_text: str) -> str:
     return (
-        "Hay tao chinh xac 5 cau hoi phong van duoi dang mot JSON array hop le. "
-        "Chi tra ve JSON array, khong tra ve JSON object don, khong markdown, khong giai thich them. "
-        "Noi dung truong question phai viet bang tieng Viet tu nhien. "
+        "Hay dong vai mot nguoi phong van ky thuat kho tinh. "
+        "Duoi vao Resume JSON va Job Description, hay tao chinh xac 5 cau hoi phong van bang tieng Viet, "
+        "sat voi kinh nghiem thuc te trong CV va sat voi yeu cau trong JD. "
+        "Uu tien cau hoi tinh huong, cau hoi dao sau, cau hoi kiem tra tinh trung thuc, trade-off, bottleneck, toi uu, va quyet dinh ky thuat. "
+        "Khong dat cau hoi qua chung chung, khong dat cau hoi kieu giao bai tap, khong dat cau hoi khong lien quan den ky nang va kinh nghiem trong CV. "
+        "Moi expected_keywords phai gom it nhat 5 tu khoa ky thuat cu the, chuyen sau, co the dung de cham cau tra loi. "
+        "Chi tra ve mot JSON array hop le, khong tra ve JSON object don, khong markdown, khong giai thich them. "
         "Moi phan tu trong array phai co cac khoa: question_id, type, skill_target, difficulty, question, expected_keywords.\n\n"
         "Vi du dinh dang dau ra:\n"
         "[\n"
         "  {\n"
         '    "question_id": "q1",\n'
         '    "type": "technical",\n'
-        '    "skill_target": "python",\n'
-        '    "difficulty": "medium",\n'
-        '    "question": "Hay mo ta mot du an backend ban da thuc hien bang Python.",\n'
-        '    "expected_keywords": ["python", "api"]\n'
+        '    "skill_target": "FastAPI/PostgreSQL",\n'
+        '    "difficulty": "hard",\n'
+        '    "question": "He thong analytics dung FastAPI va PostgreSQL bi cham khi so luong request tang manh. Ban se dieu tra bottleneck va toi uu truy van nhu the nao?",\n'
+        '    "expected_keywords": ["index", "query plan", "connection pooling", "pagination", "join optimization"]\n'
         "  }\n"
         "]\n\n"
         f"Resume JSON:\n{resume_json.strip()}\n\n"
