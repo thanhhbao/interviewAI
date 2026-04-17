@@ -13,9 +13,22 @@ if str(SRC_DIR) not in sys.path:
 from interview_ai.pipeline import InterviewPipeline
 
 
+def strip_code_fence(text: str) -> str:
+    cleaned = text.strip()
+    if cleaned.startswith("```"):
+        lines = cleaned.splitlines()
+        if lines and lines[0].startswith("```"):
+            lines = lines[1:]
+        if lines and lines[-1].strip() == "```":
+            lines = lines[:-1]
+        cleaned = "\n".join(lines).strip()
+    return cleaned
+
+
 def try_parse_json(text: str):
     try:
-        return True, json.loads(text)
+        cleaned = strip_code_fence(text)
+        return True, json.loads(cleaned)
     except Exception:
         return False, None
 
@@ -61,8 +74,8 @@ def main() -> None:
     summary = {
         "resume_extract_json_valid": resume_ok,
         "question_generation_json_valid": question_ok,
-        "resume_extract_preview": resume_result["model_output"][:500],
-        "question_generation_preview": question_result["model_output"][:500],
+        "resume_extract_preview": strip_code_fence(resume_result["model_output"])[:500],
+        "question_generation_preview": strip_code_fence(question_result["model_output"])[:500],
         "resume_extract_keys": sorted(list(resume_json.keys())) if isinstance(resume_json, dict) else [],
         "question_output_type": question_info["question_output_type"],
         "question_count": question_info["question_count"],
