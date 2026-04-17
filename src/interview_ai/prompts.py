@@ -24,9 +24,21 @@ def build_resume_optimize_prompt(resume_json: str, jd_text: str) -> str:
 
 def build_question_generation_prompt(resume_json: str, jd_text: str) -> str:
     return (
-        "Generate 5 interview questions in JSON. "
-        "Each item must include question_id, type, skill_target, difficulty, "
+        "Generate exactly 5 interview questions as a JSON array. "
+        "Return only a valid JSON array, not a JSON object, not markdown, and not extra text. "
+        "Each array item must include question_id, type, skill_target, difficulty, "
         "question, expected_keywords.\n\n"
+        "Example output format:\n"
+        "[\n"
+        "  {\n"
+        '    "question_id": "q1",\n'
+        '    "type": "technical",\n'
+        '    "skill_target": "python",\n'
+        '    "difficulty": "medium",\n'
+        '    "question": "Explain ...",\n'
+        '    "expected_keywords": ["python", "api"]\n'
+        "  }\n"
+        "]\n\n"
         f"Resume JSON:\n{resume_json.strip()}\n\n"
         f"Job Description:\n{jd_text.strip()}"
     )

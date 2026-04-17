@@ -20,6 +20,26 @@ def try_parse_json(text: str):
         return False, None
 
 
+def question_summary(payload):
+    if isinstance(payload, list):
+        return {
+            "question_output_type": "list",
+            "question_count": len(payload),
+            "question_items_valid": sum(1 for item in payload if isinstance(item, dict) and "question" in item),
+        }
+    if isinstance(payload, dict):
+        return {
+            "question_output_type": "dict",
+            "question_count": 1 if "question" in payload else 0,
+            "question_items_valid": 1 if "question" in payload else 0,
+        }
+    return {
+        "question_output_type": type(payload).__name__ if payload is not None else "none",
+        "question_count": 0,
+        "question_items_valid": 0,
+    }
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Quick evaluation script for trained InterviewAI adapters.")
     parser.add_argument("--model-name", required=True)
@@ -36,6 +56,7 @@ def main() -> None:
 
     resume_ok, resume_json = try_parse_json(resume_result["model_output"])
     question_ok, question_json = try_parse_json(question_result["model_output"])
+    question_info = question_summary(question_json)
 
     summary = {
         "resume_extract_json_valid": resume_ok,
@@ -43,7 +64,9 @@ def main() -> None:
         "resume_extract_preview": resume_result["model_output"][:500],
         "question_generation_preview": question_result["model_output"][:500],
         "resume_extract_keys": sorted(list(resume_json.keys())) if isinstance(resume_json, dict) else [],
-        "question_count": len(question_json) if isinstance(question_json, list) else 0,
+        "question_output_type": question_info["question_output_type"],
+        "question_count": question_info["question_count"],
+        "question_items_valid": question_info["question_items_valid"],
     }
 
     print(json.dumps(summary, ensure_ascii=False, indent=2))

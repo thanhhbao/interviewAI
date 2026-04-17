@@ -369,8 +369,20 @@ def load_interview_question_records(
             expected_keywords=_keywords_from_answer(brief_answer or category),
         )
         user_prompt = (
-            "Generate 1 interview question in JSON. "
+            "Generate exactly 1 interview question as a JSON array. "
+            "Return only a valid JSON array, not a JSON object, not markdown, and not extra text. "
             "Each item must include question_id, type, skill_target, difficulty, question, expected_keywords.\n\n"
+            "Example output format:\n"
+            "[\n"
+            "  {\n"
+            '    "question_id": "q1",\n'
+            '    "type": "technical",\n'
+            '    "skill_target": "distributed systems",\n'
+            '    "difficulty": "hard",\n'
+            '    "question": "Explain ...",\n'
+            '    "expected_keywords": ["consistency", "availability"]\n'
+            "  }\n"
+            "]\n\n"
             f"Resume JSON:\n{json.dumps(synthetic_resume, ensure_ascii=False, indent=2)}\n\n"
             f"Job Description:\n{synthetic_jd}"
         )
