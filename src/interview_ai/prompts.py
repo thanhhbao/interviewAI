@@ -41,3 +41,15 @@ def build_answer_evaluation_prompt(question: str, answer: str, rubric: str) -> s
         f"Answer:\n{answer.strip()}\n\n"
         f"Rubric:\n{rubric.strip()}"
     )
+
+
+def build_follow_up_prompt(question: str, answer: str, transcript_history: str) -> str:
+    return (
+        "Based on the current interview question, the candidate answer, and the prior interview history, "
+        "return JSON with keys: next_action, follow_up_question, rationale. "
+        "Use next_action as one of: follow_up, next_question, end_interview. "
+        "If the answer is vague, incomplete, or introduces an interesting project detail, prefer follow_up.\n\n"
+        f"Current Question:\n{question.strip()}\n\n"
+        f"Candidate Answer:\n{answer.strip()}\n\n"
+        f"Transcript History:\n{transcript_history.strip()}"
+    )

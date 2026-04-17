@@ -13,6 +13,7 @@ from interview_ai.parsers import generate_questions_weak, match_resume_to_jd, pa
 from interview_ai.prompts import (
     SYSTEM_PROMPT,
     build_answer_evaluation_prompt,
+    build_follow_up_prompt,
     build_question_generation_prompt,
     build_resume_extract_prompt,
     build_resume_optimize_prompt,
@@ -99,3 +100,12 @@ class InterviewPipeline:
             "resume_optimization": match_resume_to_jd(resume, jd_text).model_dump(),
             "questions": [item.model_dump() for item in generate_questions_weak(resume, jd_text)],
         }
+
+    def generate_follow_up_question(
+        self,
+        current_question: str,
+        answer: str,
+        transcript_history: str,
+    ) -> dict[str, Any]:
+        prompt = build_follow_up_prompt(current_question, answer, transcript_history)
+        return {"model_output": self._generate(prompt, max_new_tokens=256)}

@@ -3,6 +3,7 @@
 __all__ = [
     "augmentation",
     "audio",
+    "conversation",
     "dataset_adapters",
     "fusion",
     "io",
@@ -13,5 +14,6 @@ __all__ = [
     "schemas",
     "session",
     "scoring",
+    "tts",
     "vision",
 ]

@@ -51,6 +51,7 @@ The repository is designed around two layers:
 │   ├── prepare_kaggle_multitask.py
 │   ├── test_model.py
 │   ├── run_demo_pipeline.py
+│   ├── run_turn_based_session.py
 │   ├── run_multimodal_session.py
 │   └── train_sft.py
 ├── src/
@@ -58,6 +59,7 @@ The repository is designed around two layers:
 │       ├── __init__.py
 │       ├── augmentation.py
 │       ├── audio.py
+│       ├── conversation.py
 │       ├── dataset_adapters.py
 │       ├── fusion.py
 │       ├── io.py
@@ -68,6 +70,7 @@ The repository is designed around two layers:
 │       ├── schemas.py
 │       ├── scoring.py
 │       ├── session.py
+│       ├── tts.py
 │       └── vision.py
 └── requirements-colab.txt
 ```
@@ -87,6 +90,8 @@ The codebase matches the original system design as follows:
 
 - `src/interview_ai/pipeline.py`
 - `src/interview_ai/session.py`
+- `src/interview_ai/conversation.py`
+- `src/interview_ai/tts.py`
 
 ### 3. Real-Time Analysis
 
@@ -245,6 +250,34 @@ python scripts/run_multimodal_session.py \
   --vision-file data/sample/vision/sample_vision_frames.json \
   --report-dir output/report
 ```
+
+## Run Turn-Based Push-to-Talk Interview Flow
+
+This flow is intended for the simpler and more stable interview UX:
+
+1. the system shows or speaks one question
+2. the user presses the mic button and records one answer
+3. the answer audio is transcribed with Whisper
+4. the LLM evaluates the answer
+5. the system decides whether to ask a follow-up question or move to the next planned question
+
+Example:
+
+```bash
+python scripts/run_turn_based_session.py \
+  --model-name Qwen/Qwen2.5-1.5B-Instruct \
+  --adapter-dir output/qwen-resume-lora \
+  --resume-file data/sample/resumes/sample_resume.txt \
+  --jd-file data/sample/jds/sample_jd.txt \
+  --answer-audio data/sample/audio/sample_answer.txt data/sample/audio/sample_answer.txt \
+  --session-output output/conversation/session.json \
+  --tts-output-dir output/conversation/tts
+```
+
+Current implementation note:
+
+- `src/interview_ai/tts.py` is a local stub that writes the spoken text to a file
+- replace it later with a real local TTS engine such as Piper or Coqui TTS
 
 ## Training Data Format
 

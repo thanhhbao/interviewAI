@@ -106,6 +106,29 @@ class InterviewSessionReport(BaseModel):
     report_summary: dict[str, Any] = Field(default_factory=dict)
 
 
+class InterviewTurnRecord(BaseModel):
+    turn_index: int
+    question: str
+    question_type: str = "technical"
+    answer_audio_file: str = ""
+    transcript: str = ""
+    audio_metrics: dict[str, Any] = Field(default_factory=dict)
+    llm_evaluation: dict[str, Any] = Field(default_factory=dict)
+    next_question: str = ""
+    next_action: Literal["next_question", "follow_up", "end_interview"] = "next_question"
+
+
+class ConversationState(BaseModel):
+    session_id: str
+    resume_file: str
+    jd_file: str
+    current_question: str = ""
+    planned_questions: list[str] = Field(default_factory=list)
+    completed_turns: list[InterviewTurnRecord] = Field(default_factory=list)
+    follow_up_budget: int = 2
+    max_turns: int = 5
+
+
 class ChatMessage(BaseModel):
     role: Literal["system", "user", "assistant"]
     content: str
