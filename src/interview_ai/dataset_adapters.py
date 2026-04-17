@@ -41,6 +41,8 @@ QUESTION_COLUMN_CANDIDATES = {
     "question_number": ["question number", "Question Number", "id", "ID", "No"],
 }
 
+EMAIL_PATTERN = re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b")
+
 
 def build_chat_record(task: str, user_prompt: str, assistant_content: str, meta: dict[str, Any] | None = None) -> dict:
     record = SFTRecord(
@@ -87,6 +89,16 @@ def _extract_text_spans(text: str, annotation: dict[str, Any]) -> list[str]:
     return [item for item in results if item]
 
 
+def _extract_valid_email(value: str) -> str:
+    match = EMAIL_PATTERN.search(value)
+    return match.group(0) if match else ""
+
+
+def _fallback_email_from_text(text: str) -> str:
+    match = EMAIL_PATTERN.search(text)
+    return match.group(0) if match else ""
+
+
 def _profile_from_resume_annotations(text: str, annotations: list[dict[str, Any]]) -> CandidateProfile:
     profile = CandidateProfile(summary=text[:500])
     experience_company: list[str] = []
@@ -107,7 +119,11 @@ def _profile_from_resume_annotations(text: str, annotations: list[dict[str, Any]
             if field == "name" and values:
                 profile.name = profile.name or values[0]
             elif field == "email" and values:
-                profile.email = profile.email or values[0]
+                for value in values:
+                    email = _extract_valid_email(value)
+                    if email:
+                        profile.email = profile.email or email
+                        break
             elif field == "skills":
                 for value in values:
                     split_values = re.split(r"[,/;\n]", value)
@@ -157,6 +173,8 @@ def _profile_from_resume_annotations(text: str, annotations: list[dict[str, Any]
     if not profile.name:
         first_line = next((line.strip() for line in text.splitlines() if line.strip()), "")
         profile.name = first_line[:80]
+    if not profile.email:
+        profile.email = _fallback_email_from_text(text)
     return profile
 
 
