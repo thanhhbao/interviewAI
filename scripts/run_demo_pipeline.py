@@ -10,18 +10,20 @@ SRC_DIR = ROOT_DIR / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
+from interview_ai.openrouter_client import DEFAULT_CHAT_MODEL, OpenRouterClient
 from interview_ai.pipeline import InterviewPipeline
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Run demo inference for the interview AI pipeline.")
-    parser.add_argument("--model-name", required=True)
-    parser.add_argument("--adapter-dir")
+    parser.add_argument("--chat-model", default=DEFAULT_CHAT_MODEL, help="OpenRouter model id for the LLM (default: %(default)s)")
+    parser.add_argument("--provider", action="append", help="Pin OpenRouter provider order, e.g. --provider groq (repeatable)")
     parser.add_argument("--resume-file", required=True)
     parser.add_argument("--jd-file", required=True)
     args = parser.parse_args()
 
-    pipeline = InterviewPipeline(model_name=args.model_name, adapter_dir=args.adapter_dir)
+    client = OpenRouterClient(chat_model=args.chat_model, provider_order=args.provider)
+    pipeline = InterviewPipeline(client=client)
 
     resume_result = pipeline.extract_resume(args.resume_file)
     optimization_result = pipeline.optimize_resume(args.resume_file, args.jd_file)

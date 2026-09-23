@@ -4,3 +4,17 @@ __pycache__/
 .ipynb_checkpoints/
 output/
 *.zip
+.firecrawl/
+
+# Python virtualenvs
+.venv*/
+
+# Frontend (Next.js)
+frontend/node_modules/
+frontend/.next/
+frontend/out/
+frontend/.env*.local
+frontend/tsconfig.tsbuildinfo
+
+# Local build/scratch artifacts
+scripts/.build/

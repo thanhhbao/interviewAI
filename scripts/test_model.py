@@ -10,7 +10,7 @@ SRC_DIR = ROOT_DIR / "src"
 if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
-from interview_ai.pipeline import InterviewPipeline
+from interview_ai.local_pipeline import LocalInterviewPipeline
 
 
 def strip_code_fence(text: str) -> str:
@@ -69,7 +69,7 @@ def main() -> None:
     parser.add_argument("--output-file")
     args = parser.parse_args()
 
-    pipeline = InterviewPipeline(model_name=args.model_name, adapter_dir=args.adapter_dir)
+    pipeline = LocalInterviewPipeline(model_name=args.model_name, adapter_dir=args.adapter_dir)
 
     resume_result = pipeline.extract_resume(args.resume_file)
     question_result = pipeline.generate_questions(args.resume_file, args.jd_file)

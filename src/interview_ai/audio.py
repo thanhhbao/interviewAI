@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from interview_ai.io import read_text_file
+from interview_ai.openrouter_client import OpenRouterClient
 from interview_ai.schemas import AudioAnalysis
 from interview_ai.scoring import compute_fluency_score, compute_wpm, count_filler_words
 
@@ -18,16 +19,11 @@ def _load_duration_from_sidecar(path: Path) -> float:
 
 
 class AudioAnalyzer:
-    def __init__(self, whisper_model_name: str = "base") -> None:
-        self.whisper_model_name = whisper_model_name
-        self._whisper_model = None
+    """Transcribes push-to-talk answers via OpenRouter (default: Whisper Large V3
+    Turbo). .txt/.md files bypass transcription entirely — used by data/sample/ fixtures."""
 
-    def _get_whisper_model(self):
-        if self._whisper_model is None:
-            import whisper
-
-            self._whisper_model = whisper.load_model(self.whisper_model_name)
-        return self._whisper_model
+    def __init__(self, client: OpenRouterClient | None = None, **client_kwargs: Any) -> None:
+        self.client = client or OpenRouterClient(**client_kwargs)
 
     def transcribe(self, audio_path: str) -> dict[str, Any]:
         path = Path(audio_path)
@@ -39,27 +35,21 @@ class AudioAnalyzer:
                 "source": "text_fallback",
             }
 
-        model = self._get_whisper_model()
-        result = model.transcribe(str(path))
-        duration_seconds = float(result.get("segments", [{}])[-1].get("end", 60.0)) if result.get("segments") else 60.0
+        result = self.client.transcribe(path)
         return {
-            "text": result.get("text", "").strip(),
-            "duration_seconds": duration_seconds,
-            "segments": result.get("segments", []),
-            "source": "whisper",
+            "text": result["text"],
+            "duration_seconds": result["duration_seconds"],
+            "source": "openrouter",
         }
 
     def analyze(self, audio_path: str) -> AudioAnalysis:
         transcription = self.transcribe(audio_path)
         transcript = transcription["text"]
         duration_seconds = float(transcription.get("duration_seconds", 60.0))
-        segments = transcription.get("segments", [])
-
-        speech_duration = 0.0
-        if segments:
-            speech_duration = sum(float(segment.get("end", 0.0)) - float(segment.get("start", 0.0)) for segment in segments)
-        else:
-            speech_duration = duration_seconds * 0.9
+        # OpenRouter's transcription response doesn't include per-segment timing,
+        # so approximate speech time as 90% of clip duration (same fallback the
+        # previous local-Whisper path used when segments were unavailable).
+        speech_duration = duration_seconds * 0.9
         pause_ratio = max(0.0, min(1.0, 1.0 - (speech_duration / duration_seconds if duration_seconds else 1.0)))
 
         return AudioAnalysis(

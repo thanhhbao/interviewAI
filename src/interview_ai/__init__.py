@@ -7,6 +7,8 @@ __all__ = [
     "dataset_adapters",
     "fusion",
     "io",
+    "local_pipeline",
+    "openrouter_client",
     "parsers",
     "pipeline",
     "prompts",

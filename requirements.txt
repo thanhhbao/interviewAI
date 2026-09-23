@@ -1,0 +1,10 @@
+# Runtime dependencies for the OpenRouter-backed conversation pipeline
+# (scripts/run_turn_based_session.py, run_demo_pipeline.py, run_multimodal_session.py).
+# For the local LoRA training/eval path, see requirements-colab.txt instead.
+requests>=2.32.0
+pydantic>=2.8.2
+PyMuPDF>=1.24.9
+python-docx>=1.1.2
+reportlab>=4.2.2
+mediapipe>=0.10.14
+numpy>=1.26.4

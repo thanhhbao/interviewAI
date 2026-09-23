@@ -1,14 +1,10 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 from typing import Any
 
-import torch
-from peft import PeftModel
-from transformers import AutoModelForCausalLM, AutoTokenizer
-
 from interview_ai.io import read_any_text
+from interview_ai.openrouter_client import OpenRouterClient
 from interview_ai.parsers import generate_questions_weak, match_resume_to_jd, parse_resume_weak
 from interview_ai.prompts import (
     SYSTEM_PROMPT,
@@ -22,43 +18,19 @@ from interview_ai.scoring import compute_fluency_score, compute_wpm, count_fille
 
 
 class InterviewPipeline:
-    def __init__(self, model_name: str, adapter_dir: str | None = None, device: str | None = None) -> None:
-        self.device = device or ("cuda" if torch.cuda.is_available() else "cpu")
-        self.tokenizer = AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
-        self.model = AutoModelForCausalLM.from_pretrained(
-            model_name,
-            torch_dtype=torch.float16 if self.device == "cuda" else torch.float32,
-            device_map="auto" if self.device == "cuda" else None,
-            trust_remote_code=True,
-        )
-        if adapter_dir and Path(adapter_dir).exists():
-            self.model = PeftModel.from_pretrained(self.model, adapter_dir)
-        self.model.eval()
+    """LLM pipeline for the runtime conversation flow, backed by an OpenRouter chat
+    model (default: GPT-OSS-20B). Replaces local fine-tuning with a hosted API call —
+    see local_pipeline.py for the transformers/peft-based alternative used in training."""
+
+    def __init__(self, client: OpenRouterClient | None = None, **client_kwargs: Any) -> None:
+        self.client = client or OpenRouterClient(**client_kwargs)
 
     def _generate(self, user_prompt: str, max_new_tokens: int = 512) -> str:
         messages = [
             {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": user_prompt},
         ]
-        model_inputs = self.tokenizer.apply_chat_template(
-            messages,
-            tokenize=True,
-            add_generation_prompt=True,
-            return_tensors="pt",
-            return_dict=True,
-        )
-        model_inputs = {k: v.to(self.model.device) for k, v in model_inputs.items()}
-        with torch.no_grad():
-            output_ids = self.model.generate(
-                **model_inputs,
-                max_new_tokens=max_new_tokens,
-                do_sample=True,
-                temperature=0.7,
-                top_p=0.9,
-            )
-        prompt_length = model_inputs["input_ids"].shape[-1]
-        generated = output_ids[0][prompt_length:]
-        return self.tokenizer.decode(generated, skip_special_tokens=True).strip()
+        return self.client.chat(messages, max_tokens=max_new_tokens)
 
     def extract_resume(self, resume_file: str) -> dict[str, Any]:
         weak_json = parse_resume_weak(resume_file).model_dump()

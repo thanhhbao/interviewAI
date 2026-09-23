@@ -27,7 +27,7 @@ class TurnBasedConversationManager:
         tts_service: LocalTTSService | None = None,
     ) -> None:
         self.llm_pipeline = llm_pipeline
-        self.audio_analyzer = audio_analyzer or AudioAnalyzer()
+        self.audio_analyzer = audio_analyzer or AudioAnalyzer(client=llm_pipeline.client)
         self.tts_service = tts_service or LocalTTSService()
 
     def start_session(
