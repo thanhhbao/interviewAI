@@ -15,14 +15,21 @@ import {
 import { useInterview } from '@/context/InterviewContext';
 import { PALETTE } from '@/lib/motion';
 
-export const VoiceControls: React.FC = () => {
+interface VoiceControlsProps {
+  // Routed through the room's own confirmation flow rather than calling
+  // endInterviewSession directly — this control must not bypass the
+  // "you still have questions left" prompt the header End Interview button
+  // triggers.
+  onEndInterviewClick: () => void;
+}
+
+export const VoiceControls: React.FC<VoiceControlsProps> = ({ onEndInterviewClick }) => {
   const {
     interviewState,
     startAnswer,
     finishAnswer,
     restartAnswer,
     repeatCurrentQuestion,
-    endInterviewSession,
     answerTimerSeconds,
     isTranscriptOpen,
     setIsTranscriptOpen,
@@ -142,7 +149,7 @@ export const VoiceControls: React.FC = () => {
           <button
             onClick={startAnswer}
             className="flex items-center gap-2 px-6 py-2.5 rounded-xl font-medium text-xs shadow-md transition-all duration-150 active:scale-95 hover:opacity-90"
-            style={{ backgroundColor: PALETTE.accent, color: '#07080a', boxShadow: '0 4px 14px rgba(85,229,207,0.2)' }}
+            style={{ backgroundColor: PALETTE.accent, color: '#07080a', boxShadow: '0 4px 14px rgba(231, 232, 233,0.2)' }}
           >
             <Mic className="w-3.5 h-3.5" />
             <span>Start Answer</span>
@@ -173,7 +180,7 @@ export const VoiceControls: React.FC = () => {
           className="p-2 rounded-xl text-xs transition-colors hover:bg-white/[0.05]"
           style={
             isCameraActive
-              ? { backgroundColor: 'rgba(85,229,207,0.1)', color: PALETTE.accentBright }
+              ? { backgroundColor: 'rgba(231, 232, 233,0.1)', color: PALETTE.accentBright }
               : { color: PALETTE.textSecondary }
           }
           title={isCameraActive ? 'Hide self-view camera' : 'Show self-view camera'}
@@ -183,7 +190,7 @@ export const VoiceControls: React.FC = () => {
 
         {/* End Interview */}
         <button
-          onClick={endInterviewSession}
+          onClick={onEndInterviewClick}
           className="p-2 rounded-xl transition-colors hover:bg-red-500/10 hover:text-red-400"
           style={{ color: PALETTE.textSecondary }}
           title="End Interview"

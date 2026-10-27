@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -9,14 +9,36 @@ import {
   ArrowRight,
   CheckCircle,
   Clock,
+  AlertTriangle,
+  Code2,
 } from 'lucide-react';
+
 import { useInterview } from '@/context/InterviewContext';
 import { PALETTE } from '@/lib/motion';
-import { InterviewAvatar3D } from './InterviewAvatar3D';
+import { SiriOrb } from './SiriOrb';
+import { useSimulatedAmplitude, type AIState } from './ai-core';
 import { VoiceControls } from './VoiceControls';
 import { TranscriptDrawer } from './TranscriptDrawer';
 import { SelfViewCamera } from './SelfViewCamera';
 import { CodingWorkspace } from './coding/CodingWorkspace';
+import { InterviewReadinessScreen } from './InterviewReadinessScreen';
+
+// The orb visualizes the AI's own voice ('streaming' = avatarState
+// 'speaking'), not the candidate's mic input — 'listening' here means the
+// AI is waiting/attentive while the candidate answers, not that the orb is
+// reacting to the candidate's voice.
+function toOrbAIState(state: string): AIState {
+  switch (state) {
+    case 'speaking':
+      return 'streaming';
+    case 'listening':
+      return 'listening';
+    case 'thinking':
+      return 'thinking';
+    default:
+      return 'idle';
+  }
+}
 
 export const InterviewRoom: React.FC = () => {
   const router = useRouter();
@@ -31,15 +53,13 @@ export const InterviewRoom: React.FC = () => {
     elapsedSeconds,
     isFollowUpActive,
     endInterviewSession,
-    startInterviewSession,
+    hasActiveSession,
+    hasCompletedSession,
   } = useInterview();
 
-  // Auto-start interview if idle upon loading room
-  useEffect(() => {
-    if (interviewState === 'idle') {
-      startInterviewSession();
-    }
-  }, [interviewState, startInterviewSession]);
+  const [showEndConfirm, setShowEndConfirm] = useState(false);
+  const orbState = toOrbAIState(avatarState);
+  const orbAmplitude = useSimulatedAmplitude(orbState);
 
   const totalQuestions = questions.length;
   const progressPercent = Math.round(((currentQuestionIndex + 1) / totalQuestions) * 100);
@@ -55,6 +75,38 @@ export const InterviewRoom: React.FC = () => {
     (interviewState === 'coding' ||
       interviewState === 'running_code' ||
       interviewState === 'reviewing_code');
+
+  // Whether THIS question has a code editor to offer at all — independent
+  // of whether it's currently showing. Drives the right-edge tab's
+  // visibility; `showCodeEditor` is the user's own open/closed choice.
+  const hasCodingTask = Boolean(currentQuestion?.codingTask);
+  const [showCodeEditor, setShowCodeEditor] = useState(false);
+
+  // Keeps the previous behavior (coding questions open the editor
+  // automatically) as the default, while still letting the candidate close
+  // it and reopen via the tab — the click-to-open bar is additive, not a
+  // replacement for the existing auto-open.
+  useEffect(() => {
+    if (isCodingMode) setShowCodeEditor(true);
+  }, [isCodingMode, currentQuestionIndex]);
+
+  const handleEndInterviewClick = () => {
+    if (interviewState === 'completed' || interviewState === 'ended_early') return;
+    setShowEndConfirm(true);
+  };
+
+  const handleConfirmEndEarly = () => {
+    setShowEndConfirm(false);
+    endInterviewSession('ended_early');
+  };
+
+  // This room only ever consumes an already-prepared session — it does not
+  // create one itself. A direct/stale visit (no session started from Setup,
+  // or one from a previous browser session left idle) shows the readiness
+  // pre-flight screen instead of silently auto-starting a brand-new interview.
+  if (!hasActiveSession && !hasCompletedSession) {
+    return <InterviewReadinessScreen />;
+  }
 
   return (
     <div
@@ -121,7 +173,7 @@ export const InterviewRoom: React.FC = () => {
         {/* Right End Call */}
         <div className="flex items-center gap-3">
           <button
-            onClick={endInterviewSession}
+            onClick={handleEndInterviewClick}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors hover:bg-white/[0.04]"
             style={{ border: `1px solid ${PALETTE.border}`, color: PALETTE.textSecondary }}
           >
@@ -138,15 +190,37 @@ export const InterviewRoom: React.FC = () => {
       <TranscriptDrawer />
 
       {/* MAIN INTERVIEW VIEWPORT */}
-      {isCodingMode ? (
-        <CodingWorkspace />
+      {hasCodingTask && showCodeEditor ? (
+        <CodingWorkspace onClose={() => setShowCodeEditor(false)} />
       ) : (
         <main className="flex-1 flex flex-col justify-between items-center p-8 max-w-5xl mx-auto w-full relative">
+          {/* Right-edge tab — always visible, not gated on question data.
+              Opens the editor if this question actually has one
+              (`hasCodingTask`); otherwise the click is a no-op, so there's
+              nothing to keep in sync as questions change. */}
+          {!showCodeEditor && (
+            <button
+              onClick={() => hasCodingTask && setShowCodeEditor(true)}
+              className="fixed right-0 top-1/2 -translate-y-1/2 z-30 flex flex-col items-center gap-1.5 pl-2.5 pr-2 py-3 rounded-l-xl text-[11px] font-medium transition-colors hover:bg-white/[0.06] disabled:opacity-40 disabled:pointer-events-none"
+              disabled={!hasCodingTask}
+              style={{
+                backgroundColor: 'rgba(10,17,16,0.9)',
+                border: `1px solid ${PALETTE.border}`,
+                borderRight: 'none',
+                color: PALETTE.textSecondary,
+              }}
+              title={hasCodingTask ? 'Open code editor' : 'This question has no code editor'}
+            >
+              <Code2 className="w-4 h-4" style={{ color: hasCodingTask ? PALETTE.accent : PALETTE.textSecondary }} />
+              <span style={{ writingMode: 'vertical-rl' }}>Code</span>
+            </button>
+          )}
+
           {/* Follow-up Question Indicator Banner */}
           {isFollowUpActive && (
             <div
               className="px-4 py-1.5 rounded-full text-xs font-medium flex items-center gap-2"
-              style={{ backgroundColor: 'rgba(160,220,210,0.08)', border: `1px solid ${PALETTE.borderTeal}`, color: PALETTE.accentBright }}
+              style={{ backgroundColor: 'rgba(255, 255, 255,0.08)', border: `1px solid ${PALETTE.borderTeal}`, color: PALETTE.accentBright }}
             >
               <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: PALETTE.accentBright }} />
               <span>Conversational follow-up based on your response</span>
@@ -155,12 +229,15 @@ export const InterviewRoom: React.FC = () => {
 
           {/* 3D AI Interviewer Stage */}
           <div className="w-full max-w-md h-72 flex items-center justify-center my-auto relative">
-            <InterviewAvatar3D state={avatarState} isCompact={false} />
+            <SiriOrb state={orbState} amplitude={orbAmplitude} size="240px" />
 
-            {/* Subtle state pill below 3D character */}
+            {/* Subtle state pill below the orb — centered under it regardless
+                of its own text width (absolute positioning drops it out of
+                the flex layout that used to center it, so it needs its own
+                left-1/2 + -translate-x-1/2 rather than relying on that). */}
             <div
-              className="absolute -bottom-2 px-3 py-1 rounded-full backdrop-blur-md text-[11px] font-medium flex items-center gap-1.5"
-              style={{ backgroundColor: 'rgba(10,17,16,0.8)', border: `1px solid ${PALETTE.border}`, color: PALETTE.textSecondary }}
+              className="absolute -bottom-3 left-1/2 -translate-x-1/2 px-3.5 py-1.5 rounded-full backdrop-blur-md text-[11px] font-medium flex items-center gap-2 shadow-[0_8px_24px_-8px_rgba(0,0,0,0.6)] whitespace-nowrap"
+              style={{ backgroundColor: 'rgba(10,17,16,0.85)', border: `1px solid ${PALETTE.border}`, color: PALETTE.textSecondary }}
             >
               <span
                 className="w-2 h-2 rounded-full"
@@ -202,13 +279,57 @@ export const InterviewRoom: React.FC = () => {
 
           {/* Controlled Push-to-Talk Recording Controls */}
           <div className="w-full pb-4">
-            <VoiceControls />
+            <VoiceControls onEndInterviewClick={handleEndInterviewClick} />
           </div>
         </main>
       )}
 
-      {/* INTERVIEW COMPLETION MODAL */}
-      {interviewState === 'completed' && (
+      {/* END-INTERVIEW CONFIRMATION — only shown for a manual early end, not
+          the natural full-completion path, which never touches this modal. */}
+      {showEndConfirm && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4">
+          <div
+            className="w-full max-w-sm rounded-3xl p-7 shadow-2xl text-center space-y-5"
+            style={{ backgroundColor: PALETTE.surface, border: `1px solid ${PALETTE.border}` }}
+          >
+            <div
+              className="w-12 h-12 rounded-2xl mx-auto flex items-center justify-center"
+              style={{ backgroundColor: 'rgba(245,181,68,0.12)', color: '#f5b544' }}
+            >
+              <AlertTriangle className="w-5 h-5" />
+            </div>
+            <div className="space-y-2">
+              <h3 className="text-base font-semibold tracking-tight" style={{ color: PALETTE.textPrimary }}>
+                End interview?
+              </h3>
+              <p className="text-xs leading-relaxed" style={{ color: PALETTE.textSecondary }}>
+                You have completed {currentQuestionIndex} of {totalQuestions} questions. You can
+                continue practicing, or end now and review a partial session.
+              </p>
+            </div>
+            <div className="space-y-2 pt-1">
+              <button
+                onClick={() => setShowEndConfirm(false)}
+                className="w-full py-2.5 px-4 rounded-xl text-xs font-semibold transition-opacity hover:opacity-90"
+                style={{ backgroundColor: PALETTE.accent, color: '#07080a' }}
+              >
+                Continue Interview
+              </button>
+              <button
+                onClick={handleConfirmEndEarly}
+                className="w-full py-2.5 px-4 rounded-xl text-xs font-medium transition-colors hover:bg-red-500/10"
+                style={{ color: '#f87171' }}
+              >
+                End Interview
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* INTERVIEW COMPLETION MODAL — copy is accurate to how the session
+          actually ended: full completion vs. a manual early end. */}
+      {(interviewState === 'completed' || interviewState === 'ended_early') && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4">
           <div
             className="w-full max-w-md rounded-3xl p-8 shadow-2xl text-center space-y-6"
@@ -216,18 +337,35 @@ export const InterviewRoom: React.FC = () => {
           >
             <div
               className="w-14 h-14 rounded-2xl mx-auto flex items-center justify-center"
-              style={{ backgroundColor: 'rgba(85,229,207,0.12)', color: PALETTE.accentBright }}
+              style={
+                interviewState === 'completed'
+                  ? { backgroundColor: 'rgba(231, 232, 233,0.12)', color: PALETTE.accentBright }
+                  : { backgroundColor: 'rgba(245,181,68,0.12)', color: '#f5b544' }
+              }
             >
-              <CheckCircle className="w-7 h-7" />
+              {interviewState === 'completed' ? (
+                <CheckCircle className="w-7 h-7" />
+              ) : (
+                <AlertTriangle className="w-7 h-7" />
+              )}
             </div>
 
             <div className="space-y-2">
               <h3 className="text-xl font-semibold tracking-tight" style={{ color: PALETTE.textPrimary }}>
-                Interview Complete
+                {interviewState === 'completed' ? 'Interview Complete' : 'Interview Ended'}
               </h3>
               <p className="text-xs leading-relaxed" style={{ color: PALETTE.textSecondary }}>
-                Great job! You answered all {totalQuestions} questions including behavioral,
-                system design, and algorithmic coding challenges.
+                {interviewState === 'completed' ? (
+                  <>
+                    Great job! You completed all {totalQuestions} questions including behavioral,
+                    system design, and algorithmic coding challenges.
+                  </>
+                ) : (
+                  <>
+                    You completed {currentQuestionIndex} of {totalQuestions} questions. A partial
+                    report can be reviewed.
+                  </>
+                )}
               </p>
             </div>
 
@@ -237,7 +375,9 @@ export const InterviewRoom: React.FC = () => {
             >
               <div>
                 <span className="block text-[11px]" style={{ color: PALETTE.textSecondary }}>Questions</span>
-                <span className="font-semibold text-sm" style={{ color: PALETTE.textPrimary }}>{totalQuestions}</span>
+                <span className="font-semibold text-sm" style={{ color: PALETTE.textPrimary }}>
+                  {interviewState === 'completed' ? totalQuestions : currentQuestionIndex} / {totalQuestions}
+                </span>
               </div>
               <div className="w-px h-6" style={{ backgroundColor: PALETTE.border }} />
               <div>
@@ -249,7 +389,12 @@ export const InterviewRoom: React.FC = () => {
               <div className="w-px h-6" style={{ backgroundColor: PALETTE.border }} />
               <div>
                 <span className="block text-[11px]" style={{ color: PALETTE.textSecondary }}>Status</span>
-                <span className="font-semibold text-sm" style={{ color: PALETTE.accentBright }}>Ready</span>
+                <span
+                  className="font-semibold text-sm"
+                  style={{ color: interviewState === 'completed' ? PALETTE.accentBright : '#f5b544' }}
+                >
+                  {interviewState === 'completed' ? 'Ready' : 'Partial'}
+                </span>
               </div>
             </div>
 

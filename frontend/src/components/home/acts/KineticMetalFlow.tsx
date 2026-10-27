@@ -7,7 +7,8 @@ import { useSafeReducedMotion } from '@/lib/motion';
 // mechanism: a continuously deforming surface, not a static gradient. A
 // raw WebGL1 fragment shader domain-warps several layered sine fields to
 // produce a slow, heavy, hypnotic flowing-liquid-metal look, then maps the
-// result through the InterviewAI dark-teal palette instead of chrome/silver.
+// result through a neutral black-to-white ramp instead of chrome/silver
+// (was dark-teal; the accent moved to monochrome, so this did too).
 // Fully autonomous — driven by its own clock, never by scroll position.
 
 const VERTEX_SHADER = `
@@ -44,12 +45,12 @@ const FRAGMENT_SHADER = `
     n += wave(p * 2.9, 3.1, 0.11, 3.1) * 0.2;
     n = n * 0.5 + 0.5;
 
-    vec3 dark = vec3(0.0196, 0.0314, 0.0275);
-    vec3 deep = vec3(0.0275, 0.0784, 0.0667);
-    vec3 shadow = vec3(0.0549, 0.1647, 0.149);
-    vec3 highlight = vec3(0.1059, 0.4, 0.3529);
-    vec3 accent = vec3(0.3333, 0.898, 0.8118);
-    vec3 bright = vec3(0.4706, 1.0, 0.9059);
+    vec3 dark = vec3(0.03, 0.03, 0.035);
+    vec3 deep = vec3(0.06, 0.06, 0.065);
+    vec3 shadow = vec3(0.14, 0.14, 0.145);
+    vec3 highlight = vec3(0.32, 0.32, 0.33);
+    vec3 accent = vec3(0.65, 0.65, 0.66);
+    vec3 bright = vec3(1.0, 1.0, 1.0);
 
     vec3 col = mix(dark, deep, smoothstep(0.0, 0.42, n));
     col = mix(col, shadow, smoothstep(0.35, 0.62, n));

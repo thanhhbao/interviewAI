@@ -1,11 +1,12 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { ChevronDown, Mic, FileCheck, CheckCircle2 } from 'lucide-react';
 import { useInterview } from '@/context/InterviewContext';
+import { useAuth } from '@/context/AuthContext';
+import { AuthLink } from '@/components/auth/AuthLink';
 import { HeroScanOverlay } from '@/components/home/HeroScanOverlay';
 import { useSafeReducedMotion, PALETTE } from '@/lib/motion';
 
@@ -30,11 +31,16 @@ export const HeroEnergyStage: React.FC = () => {
   // preference one tick later — the freeze-avoidance behavior described
   // below is unaffected.
   const prefersReducedMotion = useSafeReducedMotion();
-  const { startInterviewSession, targetJob } = useInterview();
+  const { hasInterviewContext, targetJob } = useInterview();
+  const { user, openLoginModal } = useAuth();
 
+  // The homepage's job is navigation into the flow, not creating a session —
+  // only Setup does that. Without a fully-ready resume+job+match context
+  // this sends the visitor to prepare one first; with it, straight to
+  // configuring the interview.
   const handleStartNow = () => {
-    startInterviewSession('full');
-    router.push('/interview');
+    if (!user) { openLoginModal(); return; }
+    router.push(hasInterviewContext ? '/setup' : '/resume-job');
   };
 
   const handleScrollToContent = () => {
@@ -138,22 +144,24 @@ export const HeroEnergyStage: React.FC = () => {
               className="px-6 py-3 rounded-md text-sm font-semibold transition-opacity hover:opacity-90 active:opacity-80"
               style={{ backgroundColor: ACCENT, color: ACCENT_TEXT }}
             >
-              Launch interview room
+              Start Interview
             </button>
 
-            <Link
+            <AuthLink
               href="/setup"
               className="px-6 py-3 rounded-md text-sm font-medium border border-white/[0.12] hover:border-white/[0.2] hover:bg-white/[0.03] transition-colors"
               style={{ color: TEXT_PRIMARY }}
             >
-              Customize rubric
-            </Link>
+              Interview Setup
+            </AuthLink>
           </motion.div>
 
-          <motion.p {...ctaMotion} className="mt-5 text-xs" style={{ color: TEXT_SECONDARY }}>
-            Ready for <span style={{ color: TEXT_PRIMARY }}>{targetJob.title}</span> at{' '}
-            <span style={{ color: TEXT_PRIMARY }}>{targetJob.company}</span>
-          </motion.p>
+          {(targetJob.title || targetJob.company) && (
+            <motion.p {...ctaMotion} className="mt-5 text-xs" style={{ color: TEXT_SECONDARY }}>
+              Ready for <span style={{ color: TEXT_PRIMARY }}>{targetJob.title}</span>
+              {targetJob.company && <> at <span style={{ color: TEXT_PRIMARY }}>{targetJob.company}</span></>}
+            </motion.p>
+          )}
         </div>
 
         <div className="pb-6 flex justify-center">

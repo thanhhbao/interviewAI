@@ -57,8 +57,8 @@ function SciFiRobotAvatar({
   const cyanGlowMaterial = useMemo(
     () =>
       new THREE.MeshStandardMaterial({
-        color: new THREE.Color('#78FFE7'),
-        emissive: new THREE.Color('#78FFE7'),
+        color: new THREE.Color('#FFFFFF'),
+        emissive: new THREE.Color('#FFFFFF'),
         emissiveIntensity: 2.2,
         roughness: 0.2,
       }),
@@ -68,8 +68,8 @@ function SciFiRobotAvatar({
   const deepBlueGlowMaterial = useMemo(
     () =>
       new THREE.MeshStandardMaterial({
-        color: new THREE.Color('#14A98F'),
-        emissive: new THREE.Color('#55E5CF'),
+        color: new THREE.Color('#FFFFFF'),
+        emissive: new THREE.Color('#E7E8E9'),
         emissiveIntensity: 1.8,
         roughness: 0.3,
       }),
@@ -220,7 +220,7 @@ function SciFiRobotAvatar({
             <sphereGeometry args={[0.045, 16, 16]} />
           </mesh>
           {/* Eye aperture light */}
-          <pointLight color="#78FFE7" intensity={0.6} distance={0.8} />
+          <pointLight color="#FFFFFF" intensity={0.6} distance={0.8} />
         </group>
 
         {/* RIGHT EYE (GLOWING CYAN RING + PUPIL) */}
@@ -234,7 +234,7 @@ function SciFiRobotAvatar({
             <sphereGeometry args={[0.045, 16, 16]} />
           </mesh>
           {/* Eye aperture light */}
-          <pointLight color="#78FFE7" intensity={0.6} distance={0.8} />
+          <pointLight color="#FFFFFF" intensity={0.6} distance={0.8} />
         </group>
 
         {/* Dynamic Voice Aperture / Mouth */}
@@ -388,11 +388,11 @@ export const InterviewAvatar3D: React.FC<AvatarMeshProps> = ({
         <directionalLight position={[3, 5, 4]} intensity={1.8} color="#ffffff" />
 
         {/* Electric Blue Rim Light from behind/sides */}
-        <pointLight position={[-3, 2, -2]} intensity={2.5} color="#78FFE7" />
-        <pointLight position={[3, 2, -2]} intensity={2.5} color="#55E5CF" />
+        <pointLight position={[-3, 2, -2]} intensity={2.5} color="#FFFFFF" />
+        <pointLight position={[3, 2, -2]} intensity={2.5} color="#E7E8E9" />
 
         {/* Chest bounce fill light */}
-        <pointLight position={[0, -1.5, 2]} intensity={0.7} color="#55E5CF" />
+        <pointLight position={[0, -1.5, 2]} intensity={0.7} color="#E7E8E9" />
 
         <Float speed={1.2} rotationIntensity={0.06} floatIntensity={0.15}>
           <CustomModelLoader

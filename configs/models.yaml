@@ -1,0 +1,43 @@
+# InterviewAI provider / model configuration
+#
+# All three text roles (planning, realtime, evaluation) point to the same
+# model by default — change individual entries to optimise for cost/latency
+# once the MVP is validated.
+
+models:
+  planning:
+    provider: openrouter
+    model: openai/gpt-oss-20b
+
+  realtime:
+    provider: openrouter
+    model: openai/gpt-oss-20b
+
+  evaluation:
+    provider: openrouter
+    model: openai/gpt-oss-20b
+
+speech:
+  stt:
+    provider: openrouter
+    model: openai/whisper-large-v3-turbo
+
+  tts:
+    # Low-latency Vietnamese baseline via OpenRouter MAI Voice.
+    # To switch voices, change only the `voice` extra field:
+    #   vi-VN-Harper:MAI-Voice-2.1-Flash  (female, default)
+    #   vi-VN-Grant:MAI-Voice-2.1-Flash   (male)
+    #
+    # For higher quality (slower, higher cost), swap to:
+    #   model: microsoft/mai-voice-2.1
+    #   voice: vi-VN-Harper:MAI-Voice-2.1  (or vi-VN-Grant:MAI-Voice-2.1)
+    #
+    # For stub (no audio, writes text to file):
+    #   provider: stub
+    #   model: ""
+    provider: openrouter
+    model: microsoft/mai-voice-2.1-flash
+    extra:
+      voice: vi-VN-Harper:MAI-Voice-2.1-Flash
+      response_format: mp3
+      timeout: 60

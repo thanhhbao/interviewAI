@@ -47,6 +47,10 @@ export const SPRING_SNAPPY = { type: 'spring' as const, stiffness: 420, damping:
 export const viewportOnce = { once: true, margin: '-80px' } as const;
 
 // Palette constants shared by every redesigned section below the fold.
+// Single accent is white, not teal — key names (`borderTeal`, `deepTeal`)
+// are kept as-is since dozens of call sites reference them by name; only
+// the values changed, so this is the one place to look for the actual
+// colors in use.
 export const PALETTE = {
   bg: '#07080a',
   bg2: '#070C0C',
@@ -54,10 +58,10 @@ export const PALETTE = {
   surface2: '#0C1413',
   surfaceFaint: 'rgba(255,255,255,0.025)',
   border: 'rgba(255,255,255,0.07)',
-  borderTeal: 'rgba(160,220,210,0.08)',
+  borderTeal: 'rgba(255,255,255,0.1)',
   textPrimary: '#ECEDE9',
   textSecondary: '#858E8A',
-  accent: '#55E5CF',
-  accentBright: '#78FFE7',
-  deepTeal: '#14A98F',
+  accent: '#E7E8E9',
+  accentBright: '#FFFFFF',
+  deepTeal: '#FFFFFF',
 } as const;

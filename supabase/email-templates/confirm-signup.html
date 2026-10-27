@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Confirm your email — InterviewAI</title>
+</head>
+<body style="margin:0;padding:0;background-color:#07080a;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#07080a;min-height:100vh;">
+    <tr>
+      <td align="center" style="padding:48px 16px;">
+
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:480px;">
+
+          <!-- Logo / wordmark -->
+          <tr>
+            <td align="center" style="padding-bottom:40px;">
+              <span style="font-size:11px;font-family:ui-monospace,'SF Mono',Menlo,monospace;letter-spacing:0.15em;text-transform:uppercase;color:#858E8A;">
+                InterviewAI
+              </span>
+            </td>
+          </tr>
+
+          <!-- Card -->
+          <tr>
+            <td style="background-color:#0A1110;border:1px solid rgba(255,255,255,0.07);border-radius:16px;padding:40px 40px 36px;">
+
+              <!-- Icon -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="padding-bottom:28px;">
+                    <div style="display:inline-block;width:48px;height:48px;background-color:#0C1413;border:1px solid rgba(255,255,255,0.07);border-radius:12px;text-align:center;line-height:48px;font-size:22px;">
+                      ✉️
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- Heading -->
+                <tr>
+                  <td align="center" style="padding-bottom:10px;">
+                    <h1 style="margin:0;font-size:22px;font-weight:600;color:#ECEDE9;letter-spacing:-0.3px;">
+                      Confirm your email
+                    </h1>
+                  </td>
+                </tr>
+
+                <!-- Subtext -->
+                <tr>
+                  <td align="center" style="padding-bottom:32px;">
+                    <p style="margin:0;font-size:14px;line-height:1.6;color:#858E8A;max-width:320px;">
+                      Click the button below to verify your address and finish creating your InterviewAI account.
+                    </p>
+                  </td>
+                </tr>
+
+                <!-- CTA button -->
+                <tr>
+                  <td align="center" style="padding-bottom:32px;">
+                    <a href="{{ .ConfirmationURL }}"
+                       style="display:inline-block;padding:13px 32px;background-color:#E7E8E9;color:#07080a;font-size:14px;font-weight:600;text-decoration:none;border-radius:8px;letter-spacing:-0.1px;">
+                      Confirm email address
+                    </a>
+                  </td>
+                </tr>
+
+                <!-- Divider -->
+                <tr>
+                  <td style="padding-bottom:24px;">
+                    <div style="height:1px;background-color:rgba(255,255,255,0.07);"></div>
+                  </td>
+                </tr>
+
+                <!-- Fallback link -->
+                <tr>
+                  <td align="center">
+                    <p style="margin:0 0 8px;font-size:12px;color:#4a5250;">
+                      Button not working? Copy and paste this link:
+                    </p>
+                    <p style="margin:0;font-size:11px;word-break:break-all;">
+                      <a href="{{ .ConfirmationURL }}" style="color:#858E8A;text-decoration:underline;">
+                        {{ .ConfirmationURL }}
+                      </a>
+                    </p>
+                  </td>
+                </tr>
+
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td align="center" style="padding-top:28px;">
+              <p style="margin:0 0 6px;font-size:12px;color:#4a5250;">
+                This link expires in 24 hours and can only be used once.
+              </p>
+              <p style="margin:0;font-size:12px;color:#4a5250;">
+                If you didn't create an account, you can safely ignore this email.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>

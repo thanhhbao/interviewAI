@@ -7,6 +7,7 @@ import { useInterview } from '@/context/InterviewContext';
 import { samplePastInterviews } from '@/lib/mockData';
 import { PALETTE, fadeUp, viewportOnce } from '@/lib/motion';
 import { ChapterMarker } from '@/components/home/acts/ChapterMarker';
+import { AuthLink } from '@/components/auth/AuthLink';
 
 function CountUp({ value, suffix = '' }: { value: number; suffix?: string }) {
   const ref = useRef<HTMLSpanElement>(null);
@@ -37,7 +38,7 @@ const navItems = [
 ];
 
 export const CandidatePortalWindow: React.FC = () => {
-  const { candidate, targetJob } = useInterview();
+  const { candidate, targetJob, matchAnalysis } = useInterview();
 
   const readiness = 82;
   const chartValues = [40, 55, 48, 66, 60, 74, readiness];
@@ -72,7 +73,7 @@ export const CandidatePortalWindow: React.FC = () => {
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
               style={{ border: `1px solid ${PALETTE.borderTeal}`, color: PALETTE.accent, backgroundColor: PALETTE.surfaceFaint }}
             >
-              {targetJob.matchScore}% MATCH
+              {matchAnalysis.score}% MATCH
             </span>
           </motion.div>
           <motion.div
@@ -159,14 +160,14 @@ export const CandidatePortalWindow: React.FC = () => {
                       {targetJob.title}
                     </h3>
                   </div>
-                  <a
+                  <AuthLink
                     href="/setup"
                     className="flex items-center gap-1 text-[12px] font-medium px-3 py-1.5 rounded-[8px] transition-colors"
                     style={{ color: '#07080a', backgroundColor: PALETTE.accent }}
                   >
                     Launch
                     <ArrowUpRight className="w-3.5 h-3.5" />
-                  </a>
+                  </AuthLink>
                 </div>
 
                 <div>
@@ -196,7 +197,7 @@ export const CandidatePortalWindow: React.FC = () => {
                       <motion.div
                         key={i}
                         className="flex-1 rounded-t-[3px]"
-                        style={{ backgroundColor: i === chartValues.length - 1 ? PALETTE.accentBright : 'rgba(85,229,207,0.25)' }}
+                        style={{ backgroundColor: i === chartValues.length - 1 ? PALETTE.accentBright : 'rgba(231, 232, 233,0.25)' }}
                         initial={{ height: 0 }}
                         whileInView={{ height: `${v}%` }}
                         viewport={viewportOnce}

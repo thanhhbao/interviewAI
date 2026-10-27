@@ -56,7 +56,7 @@ export const TranscriptDrawer: React.FC = () => {
                   isAi
                     ? { backgroundColor: 'rgba(255,255,255,0.03)', border: `1px solid ${PALETTE.border}`, color: PALETTE.textPrimary }
                     : {
-                        backgroundColor: 'rgba(85,229,207,0.06)',
+                        backgroundColor: 'rgba(231, 232, 233,0.06)',
                         border: `1px solid ${PALETTE.borderTeal}`,
                         color: PALETTE.textPrimary,
                         marginLeft: 16,
@@ -73,7 +73,7 @@ export const TranscriptDrawer: React.FC = () => {
                     ) : (
                       <span className="flex items-center gap-1 font-semibold" style={{ color: PALETTE.textPrimary }}>
                         <User className="w-3 h-3" />
-                        {candidate.name}
+                        {candidate.name || 'You'}
                       </span>
                     )}
                     {msg.isFollowUp && (

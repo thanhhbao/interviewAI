@@ -2,15 +2,16 @@
 
 import React from 'react';
 import { motion, useScroll, useSpring } from 'framer-motion';
-import { HeroEnergyStage } from '@/components/home/HeroEnergyStage';
+import { InterviewTerminalHero } from '@/components/home/InterviewTerminalHero';
 import { CompanyMarquee } from '@/components/home/CompanyMarquee';
+import { IndustryVoicesTicker } from '@/components/home/IndustryVoicesTicker';
 import { IntelligenceConsole } from '@/components/home/IntelligenceConsole';
 import { ScenarioCarousel } from '@/components/home/ScenarioCarousel';
 import { LifecycleJourney } from '@/components/home/LifecycleJourney';
 import { CandidatePortalWindow } from '@/components/home/CandidatePortalWindow';
 import { InteractiveFaq } from '@/components/home/InteractiveFaq';
 import { FinalCtaSection } from '@/components/home/FinalCtaSection';
-import { SiteFooter } from '@/components/home/SiteFooter';
+import { DandelionFooter } from '@/components/home/footer/DandelionFooter';
 import { ActShell } from '@/components/home/acts/ActShell';
 import { DotGrid } from '@/components/home/acts/DotGrid';
 import { KineticMetalFlow } from '@/components/home/acts/KineticMetalFlow';
@@ -49,12 +50,12 @@ export default function HomePage() {
           left on the page: a plain reading-progress indicator, not a
           content/background animation. */}
       <motion.div
-        className="fixed top-0 left-0 right-0 h-[2px] bg-[#55E5CF] origin-left z-50 pointer-events-none"
+        className="fixed top-0 left-0 right-0 h-[2px] bg-[#E7E8E9] origin-left z-50 pointer-events-none"
         style={{ scaleX }}
       />
 
-      {/* HERO — untouched */}
-      <HeroEnergyStage />
+      {/* HERO — terminal computer design */}
+      <InterviewTerminalHero />
 
       {/* ============================ ACT I — UNDERSTAND ============================ */}
       <ActShell background={<DotGrid className="w-full h-full" />}>
@@ -64,21 +65,49 @@ export default function HomePage() {
         </div>
       </ActShell>
 
+      {/* Editorial/social-proof strip between Act I and Act II — its own
+          atmosphere (no ActShell background), same as FinalCtaSection. */}
+      <IndustryVoicesTicker />
+
       {/* ============================ ACT II — SIMULATE ============================= */}
       <ActShell background={<KineticMetalFlow className="w-full h-full" />}>
         <ScenarioCarousel />
         <LifecycleJourney />
       </ActShell>
 
-      {/* ============================ ACT III — IMPROVE ============================= */}
-      <ActShell background={<StarsDataField className="w-full h-full" />}>
-        <CandidatePortalWindow />
-        <InteractiveFaq />
-      </ActShell>
+      {/* ============================ ENDING SEQUENCE ================================
+          Act III (IMPROVE) + Final CTA + Footer share ONE StarsDataField canvas so
+          stars travel in a single continuous direction with no restart or seam at
+          section boundaries. The canvas is absolute-inset-0 inside a relative
+          wrapper whose height is the combined flow height of all three children.   */}
+      <div className="relative">
+        {/* Single shared star background. pointer-events-none + aria-hidden so
+            it never intercepts clicks or shows up in accessibility trees.         */}
+        <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+          <StarsDataField className="w-full h-full" />
+        </div>
 
-      <FinalCtaSection />
+        {/* Top fade — dissolves the star field into Act II's background colour
+            so consecutive acts blend instead of cutting hard.                     */}
+        <div
+          className="pointer-events-none absolute inset-x-0 top-0 h-32"
+          aria-hidden="true"
+          style={{ background: 'linear-gradient(to bottom, #060A0A, transparent)' }}
+        />
 
-      <SiteFooter />
+        {/* ACT III — IMPROVE: no ActShell (avoids duplicate canvas + solid bg).
+            Content sits in a relative div so it stacks above the absolute canvas. */}
+        <div className="relative">
+          <CandidatePortalWindow />
+          <InteractiveFaq />
+        </div>
+
+        {/* FinalCtaSection background is transparent — shared stars show through */}
+        <FinalCtaSection />
+
+        {/* DandelionFooter has its own opaque gradient, naturally covers the stars */}
+        <DandelionFooter />
+      </div>
     </div>
   );
 }

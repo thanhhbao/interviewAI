@@ -1,5 +1,80 @@
 # InterviewAI
 
+## OpenRouter Vietnamese TTS
+
+Generate real Vietnamese interview audio in one command.
+
+### Setup
+
+```bash
+python3 -m pip install -r requirements.txt
+```
+
+Open `.env` and paste your key:
+
+```
+OPENROUTER_API_KEY=sk-or-...
+```
+
+### 1 — List available TTS models
+
+```bash
+PYTHONPATH=src python3 scripts/list_openrouter_tts_models.py --vietnamese-only
+```
+
+### 2 — Smoke test (generates one MP3)
+
+```bash
+PYTHONPATH=src python3 scripts/test_openrouter_tts.py
+# Output: artifacts/tts-smoke/smoke.mp3
+```
+
+Play the file:
+
+```bash
+open artifacts/tts-smoke/smoke.mp3          # macOS
+mpv  artifacts/tts-smoke/smoke.mp3          # Linux
+```
+
+### 3 — Full benchmark (optional, paid)
+
+Preview what will run:
+
+```bash
+PYTHONPATH=src python3 scripts/benchmark_openrouter_tts.py --dry-run
+```
+
+Run one model only:
+
+```bash
+PYTHONPATH=src python3 scripts/benchmark_openrouter_tts.py \
+  --models microsoft/mai-voice-2.1-flash \
+  --yes
+```
+
+Run the full matrix:
+
+```bash
+PYTHONPATH=src python3 scripts/benchmark_openrouter_tts.py --yes
+```
+
+Results are written to `artifacts/tts-benchmarks/<timestamp>/` as MP3 files,
+`manifest.json`, `summary.csv`, and a human-editable `ratings.csv`.
+
+### Default model and voice
+
+| Field | Value |
+|---|---|
+| Provider | OpenRouter |
+| Model | `microsoft/mai-voice-2.1-flash` |
+| Voice | `vi-VN-Harper:MAI-Voice-2.1-Flash` |
+| Format | MP3 |
+
+Change the voice or model in [`configs/models.yaml`](configs/models.yaml) —
+no code changes required.
+
+---
+
 InterviewAI is a multimodal interview-assistant skeleton for:
 
 - resume parsing

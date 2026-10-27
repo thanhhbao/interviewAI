@@ -69,7 +69,7 @@ export const SelfViewCamera: React.FC = () => {
 
       {/* Candidate label tag */}
       <div className="absolute bottom-2 left-2 right-2 px-2 py-1 rounded-lg bg-black/60 backdrop-blur-md flex items-center justify-between text-[10px] text-white">
-        <span className="truncate">{candidate.name} (You)</span>
+        <span className="truncate">{candidate.name ? `${candidate.name} (You)` : 'You'}</span>
         <button
           onClick={() => setIsCameraActive(false)}
           className="text-neutral-400 hover:text-white"

@@ -1,104 +1,42 @@
 import {
   CandidateProfile,
   TargetJob,
+  JobMatchAnalysis,
+  ResumeAnalysis,
   ResumeSuggestion,
   InterviewQuestion,
   InterviewReport,
 } from './types/interview';
 
 export const initialCandidateProfile: CandidateProfile = {
-  name: 'Alex Nguyen',
-  title: 'Senior Software Engineer',
-  resumeFileName: 'Alex_Nguyen_SWE_Resume.pdf',
-  lastUpdated: 'Updated 3 days ago',
-  summary:
-    'Experienced Backend & Distributed Systems Engineer with 5+ years building high-throughput microservices, REST/gRPC APIs, and event-driven data pipelines. Proficient in Python, FastAPI, PostgreSQL, Docker, and AWS cloud infrastructure.',
-  experience: [
-    {
-      id: 'exp-1',
-      company: 'CloudScale Systems',
-      role: 'Senior Backend Engineer',
-      duration: '2022 - Present · 2 yrs 4 mos',
-      highlights: [
-        'Architected real-time ingestion service processing 40M+ events/day using FastAPI, Kafka, and TimescaleDB, lowering p99 latency from 180ms to 42ms.',
-        'Migrated monolithic data pipeline to containerized Kubernetes microservices on AWS EKS, reducing compute overhead by 28%.',
-        'Implemented Redis distributed caching layer and database query indexing, cutting PostgreSQL CPU load by 35% during peak traffic spikes.',
-      ],
-    },
-    {
-      id: 'exp-2',
-      company: 'TechFlow Labs',
-      role: 'Software Engineer',
-      duration: '2020 - 2022 · 2 yrs',
-      highlights: [
-        'Engineered customer-facing RESTful APIs in Python/Django and PostgreSQL supporting 250k daily active users.',
-        'Designed asynchronous worker queues with Celery and Redis to handle batch email notifications and external webhook deliveries.',
-        'Built automated CI/CD deployment pipelines using GitHub Actions, reducing release cycle time from 3 days to under 20 minutes.',
-      ],
-    },
-  ],
-  education: [
-    {
-      id: 'edu-1',
-      school: 'University of California, Irvine',
-      degree: 'B.S. in Computer Science',
-      year: '2016 - 2020',
-    },
-  ],
-  skills: [
-    'Python',
-    'FastAPI',
-    'PostgreSQL',
-    'Docker',
-    'AWS (ECS, S3, RDS)',
-    'Redis',
-    'REST APIs',
-    'Microservices',
-    'Git',
-    'CI/CD',
-    'Linux',
-  ],
-  projects: [
-    {
-      id: 'proj-1',
-      name: 'OmniCache Distributed KV Store',
-      description:
-        'A lightweight distributed in-memory key-value cache written in Python with Raft consensus and LRU eviction policy.',
-      tech: ['Python', 'AsyncIO', 'Sockets', 'Raft Algorithm'],
-    },
-    {
-      id: 'proj-2',
-      name: 'RateGate API Limiter',
-      description:
-        'High-performance token-bucket rate limiter middleware for FastAPI backed by Redis Lua scripts.',
-      tech: ['FastAPI', 'Redis', 'Python', 'Docker'],
-    },
-  ],
+  name: '',
+  title: '',
+  resumeFileName: '',
+  lastUpdated: '',
+  summary: '',
+  experience: [],
+  education: [],
+  skills: [],
+  projects: [],
 };
 
 export const initialTargetJob: TargetJob = {
-  title: 'Software Engineer - Platform & Core APIs',
-  company: 'Nova Technologies',
-  location: 'San Francisco, CA (Hybrid / Remote Option)',
+  title: '',
+  company: '',
+  location: '',
   expectedDurationMinutes: 25,
   questionCount: 4,
-  description:
-    'Nova Technologies is building next-generation cloud infrastructure orchestration software. We are looking for a Software Engineer to join our Core Platform team to design, implement, and scale distributed REST and gRPC services powering thousands of mission-critical developer workflows.',
-  requiredSkills: [
-    'Python',
-    'FastAPI or similar asynchronous web framework',
-    'PostgreSQL & relational database tuning',
-    'Docker & containerized workloads',
-    'AWS cloud services (ECS/EKS, RDS, SQS)',
-    'Distributed systems design & REST API standards',
-  ],
-  preferredSkills: [
-    'Kubernetes orchestration & Helm',
-    'Event streaming with Kafka or RabbitMQ',
-    'Redis caching patterns & lock management',
-    'Observability with OpenTelemetry / Datadog',
-  ],
-  matchScore: 88,
+  description: '',
+  requiredSkills: [],
+  preferredSkills: [],
+};
+
+// Seed match analysis — used only for homepage/dev display (e.g.
+// CandidatePortalWindow), never as proof the user actually ran a match on
+// /resume-job. That page gates on `matchStatus === 'ready'`, not on this
+// object being non-empty.
+export const initialJobMatchAnalysis: JobMatchAnalysis = {
+  score: 88,
   matchedSkills: [
     'Python',
     'FastAPI',
@@ -115,6 +53,22 @@ export const initialTargetJob: TargetJob = {
     'PostgreSQL connection pooling under 50k RPS',
     'Algorithmic problem solving and data structures',
     'STAR framework behavioral impact storytelling',
+  ],
+};
+
+// Seed resume analysis — same rule as the match analysis above: dev/homepage
+// display only, never proof the user actually parsed a resume. /resume-job
+// gates on `resumeStatus === 'ready'`.
+export const initialResumeAnalysis: ResumeAnalysis = {
+  inferredRole: 'Senior Backend Engineer',
+  inferredSeniority: 'Senior',
+  coreSkills: ['Python', 'FastAPI', 'PostgreSQL', 'Docker', 'AWS'],
+  inferredFocusAreas: [
+    'Backend Architecture',
+    'API Design',
+    'Database Performance',
+    'Distributed Systems',
+    'Production Scalability',
   ],
 };
 

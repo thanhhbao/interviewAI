@@ -8,16 +8,16 @@ import { fadeUp, viewportOnce } from '@/lib/motion';
 
 // Continues the hero's "Cinematic Technical Instrument" palette rather than
 // the old four-color SaaS-card system. Bright/deep teal match the hero scan
-// overlay's own core/trail colors (#78FFE7 / #14A98F) so this section reads
+// overlay's own core/trail colors (#FFFFFF / #FFFFFF) so this section reads
 // as the same product, not a different visual system.
 const SURFACE = '#0A1110';
 const BORDER = 'rgba(255,255,255,0.07)';
-const BORDER_TEAL = 'rgba(160,220,210,0.08)';
+const BORDER_TEAL = 'rgba(255, 255, 255,0.08)';
 const TEXT_PRIMARY = '#ECEDE9';
 const TEXT_SECONDARY = '#858E8A';
-const ACCENT = '#55E5CF';
-const ACCENT_BRIGHT = '#78FFE7';
-const ACCENT_DEEP = '#14A98F';
+const ACCENT = '#E7E8E9';
+const ACCENT_BRIGHT = '#FFFFFF';
+const ACCENT_DEEP = '#FFFFFF';
 
 const WAVEFORM_HEIGHTS = [5, 11, 7, 16, 9, 13, 6, 18, 10, 8, 14, 6, 12, 9, 5, 15, 7, 11];
 

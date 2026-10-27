@@ -25,10 +25,23 @@ interface Dot {
   influence: number; // smoothed 0-1, drives color/size too
 }
 
-export function DotGrid({ className }: { className?: string }) {
+interface DotGridProps {
+  className?: string;
+  // Multiplies the idle (non-hovered) alpha and radius. Home's hero act
+  // uses the default (1) — a near-invisible-until-hovered field. App pages
+  // (AppBackground) pass a higher value since they don't get the same
+  // cursor-sweeping discovery moment Home's full-bleed canvas does.
+  idleIntensity?: number;
+}
+
+export function DotGrid({ className, idleIntensity = 1 }: DotGridProps) {
   const dotsRef = useRef<Dot[]>([]);
   const pointer = useRef({ x: -9999, y: -9999 });
   const lastT = useRef(0);
+  // Read via ref inside the stable `draw` callback below, so passing a
+  // different idleIntensity doesn't recreate `draw` and restart the loop.
+  const idleIntensityRef = useRef(idleIntensity);
+  idleIntensityRef.current = idleIntensity;
 
   const buildGrid = useCallback((w: number, h: number) => {
     const cols = Math.ceil(w / SPACING) + 1;
@@ -82,15 +95,16 @@ export function DotGrid({ className }: { className?: string }) {
       d.y += (targetY - d.y) * EASE;
 
       const shimmer = 0.6 + 0.4 * Math.sin(t * 0.4 + d.gx * 0.02 + d.gy * 0.02);
-      const idleAlpha = 0.1 + shimmer * 0.08;
+      const idleAlpha = (0.1 + shimmer * 0.08) * idleIntensityRef.current;
       const alpha = idleAlpha + d.influence * (0.7 - idleAlpha);
-      const radius = RADIUS_PX + d.influence * 1.1;
+      const radius = (RADIUS_PX + (idleIntensityRef.current - 1) * 0.35) + d.influence * 1.1;
 
-      // Idle: rgba(133,142,138, a). Active blends toward #55E5CF, and the
-      // closest dots (highest influence) push further toward #78FFE7.
-      const r = Math.round(133 + (120 - 133) * d.influence);
+      // Idle: rgba(133,142,138, a) — a neutral warm-gray. Active dots blend
+      // straight toward pure white (255,255,255) as influence increases; no
+      // hue shift, since the accent is monochrome now.
+      const r = Math.round(133 + (255 - 133) * d.influence);
       const g = Math.round(142 + (255 - 142) * d.influence);
-      const b = Math.round(138 + (231 - 138) * d.influence);
+      const b = Math.round(138 + (255 - 138) * d.influence);
 
       ctx.beginPath();
       ctx.arc(d.x, d.y, radius, 0, Math.PI * 2);
@@ -101,7 +115,7 @@ export function DotGrid({ className }: { className?: string }) {
         // Soft bloom on the innermost, most-engaged dots only.
         ctx.beginPath();
         ctx.arc(d.x, d.y, radius * 2.4, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(120, 255, 231, ${(d.influence - 0.4) * 0.12})`;
+        ctx.fillStyle = `rgba(255, 255, 255, ${(d.influence - 0.4) * 0.12})`;
         ctx.fill();
       }
     }

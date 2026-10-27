@@ -1,4 +1,5 @@
 .DS_Store
+.env
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
@@ -18,3 +19,5 @@ frontend/tsconfig.tsbuildinfo
 
 # Local build/scratch artifacts
 scripts/.build/
+artifacts/
+frontend/undefined/

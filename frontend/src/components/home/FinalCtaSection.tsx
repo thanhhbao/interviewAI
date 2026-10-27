@@ -2,46 +2,56 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import { useInterview } from '@/context/InterviewContext';
+import { useAuth } from '@/context/AuthContext';
 import { PALETTE } from '@/lib/motion';
-import { StarsDataField } from '@/components/home/acts/StarsDataField';
+import { AuthLink } from '@/components/auth/AuthLink';
 
 export const FinalCtaSection: React.FC = () => {
   const router = useRouter();
-  const { startInterviewSession } = useInterview();
+  const { hasInterviewContext } = useInterview();
+  const { user, openLoginModal } = useAuth();
 
   const handleStart = () => {
-    startInterviewSession('full');
-    router.push('/interview');
+    if (!user) { openLoginModal(); return; }
+    router.push(hasInterviewContext ? '/setup' : '/resume-job');
   };
 
   return (
-    <section className="relative w-full py-32 md:py-44 overflow-hidden" style={{ backgroundColor: '#050807' }}>
-      {/* Static perspective grid — the path ahead, not a scroll-scrubbed prop */}
+    // Background is intentionally transparent — the shared StarsDataField in
+    // page.tsx spans Act III + this section + footer, so no canvas here.
+    <section className="relative w-full pt-36 pb-48 md:pt-44 md:pb-64 overflow-hidden">
+      {/* Perspective grid — mask fades toward bottom so it dissolves
+          naturally rather than cutting off at the section edge. */}
       <div
         className="pointer-events-none absolute inset-0"
         style={{
           backgroundImage:
-            'linear-gradient(rgba(160,220,210,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(160,220,210,0.05) 1px, transparent 1px)',
+            'linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px)',
           backgroundSize: '64px 64px',
-          maskImage: 'radial-gradient(ellipse 60% 60% at 50% 40%, black, transparent)',
-          WebkitMaskImage: 'radial-gradient(ellipse 60% 60% at 50% 40%, black, transparent)',
+          maskImage: 'radial-gradient(ellipse 70% 55% at 50% 35%, black 30%, transparent 80%)',
+          WebkitMaskImage: 'radial-gradient(ellipse 70% 55% at 50% 35%, black 30%, transparent 80%)',
         }}
       />
 
-      {/* A continuation of Act III's autonomous data field — "the path ahead
-          is open" — still fully self-driven, never tied to scroll. */}
-      <StarsDataField className="w-full h-full" />
-
+      {/* Radial centre glow */}
       <div
         className="pointer-events-none absolute left-1/2 top-1/3 -translate-x-1/2 -translate-y-1/2 w-[560px] h-[560px] rounded-full"
         aria-hidden="true"
       >
-        <div className="w-full h-full rounded-full" style={{ background: `radial-gradient(circle, rgba(20,169,143,0.16), transparent 70%)` }} />
+        <div className="w-full h-full rounded-full" style={{ background: `radial-gradient(circle, rgba(255,255,255,0.14), transparent 70%)` }} />
       </div>
+
+      {/* Bottom fade — dissolves the star field / grid into the footer
+          background colour so there is no hard section seam. Height is
+          generous so the fade starts well above the boundary. */}
+      <div
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-56 md:h-72"
+        aria-hidden="true"
+        style={{ background: 'linear-gradient(to bottom, transparent, #050807 70%)' }}
+      />
 
       <div className="relative z-10 max-w-2xl mx-auto px-6 text-center">
         <motion.p
@@ -94,13 +104,13 @@ export const FinalCtaSection: React.FC = () => {
             Start an interview
             <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
           </button>
-          <Link
+          <AuthLink
             href="/setup"
             className="px-7 py-3.5 rounded-[10px] text-sm font-medium transition-colors"
             style={{ color: PALETTE.textPrimary, border: `1px solid ${PALETTE.border}` }}
           >
             Configure session
-          </Link>
+          </AuthLink>
         </motion.div>
       </div>
     </section>

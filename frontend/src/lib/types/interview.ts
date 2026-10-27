@@ -11,7 +11,8 @@ export type InterviewState =
   | 'coding'
   | 'running_code'
   | 'reviewing_code'
-  | 'completed';
+  | 'completed'
+  | 'ended_early';
 
 export type AvatarState = 'idle' | 'speaking' | 'listening' | 'thinking';
 
@@ -68,12 +69,66 @@ export interface TargetJob {
   description: string;
   requiredSkills: string[];
   preferredSkills: string[];
-  matchScore: number;
+}
+
+// Match analysis is derived FROM a (candidate, job) pair — it is not part of
+// the job itself. Kept separate so a real backend can later return
+// "job" and "match analysis" as the distinct concepts they actually are,
+// without reshaping TargetJob again.
+export interface JobMatchAnalysis {
+  score: number;
   matchedSkills: string[];
-  missingSkills: string[];
   partiallyMatchedSkills: string[];
+  missingSkills: string[];
   focusAreas: string[];
 }
+
+// Input captured from the "Add/Replace Job Description" form, before mock
+// analysis turns it into a full TargetJob.
+export interface JobInput {
+  title: string;
+  company: string;
+  location: string;
+  description: string;
+}
+
+// Phase 2 workflow readiness for the Resume & Job page. Distinct from the
+// Phase 1 `hasResumeContext`/`hasTargetJobContext`/`hasInterviewContext`
+// booleans exposed by InterviewContext (those are the coarse gate other
+// pages/guards read); these are the finer-grained status each mock stage
+// moves through so the UI can render the right empty/loading/error/ready
+// state without inferring anything from whether seed data happens to be
+// non-empty.
+export type ResumeStatus = 'empty' | 'parsing' | 'ready' | 'error';
+export type JobStatus = 'empty' | 'analyzing' | 'ready' | 'error';
+export type MatchStatus = 'idle' | 'analyzing' | 'ready' | 'error';
+
+export type ResumeParseStage = 'uploading' | 'reading' | 'extracting';
+export type JobAnalysisStage = 'analyzing' | 'extracting_required' | 'extracting_preferred';
+
+// What resume parsing produces beyond the raw profile — enough to drive an
+// interview on its own, with no Job Description required. A Target Job (when
+// present) sharpens this via JobMatchAnalysis; it never replaces it.
+export interface ResumeAnalysis {
+  inferredRole: string;
+  inferredSeniority?: string;
+  coreSkills: string[];
+  inferredFocusAreas: string[];
+}
+
+// Result of a resume upload — the parsed profile plus what could be inferred
+// from it, so the mock service boundary already returns both pieces a real
+// `POST /resume/parse` would.
+export interface ParsedResume {
+  candidate: CandidateProfile;
+  analysis: ResumeAnalysis;
+}
+
+// Which inputs actually shaped the interview context for this session —
+// lets /setup (and later, real question generation) distinguish a
+// resume-only session from one sharpened by a target job. Not yet consumed
+// for question generation; this phase only makes it available.
+export type InterviewContextSource = 'resume' | 'resume_and_job';
 
 export interface CodingTestCase {
   id: number;
